@@ -1,0 +1,7 @@
+raw/
+.Rhistory
+.Rproj.user
+*Rproj
+.RData
+__pycache__/
+notebooks
