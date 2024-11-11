@@ -9,6 +9,7 @@ library(dplyr)
 library(ggplot2)
 library(ggpubr)
 library(kableExtra)
+library(corrplot)
 ```
 
 # Introducción 
@@ -160,27 +161,19 @@ desc_data %>%
 
 
 ## Análisis Exploratorio
-
+### Análisis de la Variable a Explicar
 ```{r}
-glimpse(datos)
-summary(datos)
-
-library(corrplot)
-num_data <- datos %>% select_if(is.numeric)
-correlacion<-round(cor(num_data), 1)
-corrplot(correlacion, method="number", type="upper")
-
-# library(GGally)
-# ggpairs(num_data, lower = list(continuous = "smooth"),
-#         diag = list(continuous = "barDiag"), axisLabels = "none")
-
 ggplot(datos, aes(x = edad_primer_hijo)) +
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(title = "Distribución de la Edad del Primer Hijo",
        x = "Edad del Primer Hijo",
        y = "Frecuencia") +
   theme_minimal()
+```
 
+### Análisis Variables Categóricas vs Edad Primer Hijo
+
+```{r}
 ggplot(datos, aes(x = factor(educacion), y = edad_primer_hijo)) +
   geom_boxplot(fill = "lightgreen", color = "darkgreen") +
   labs(title = "Edad del Primer Hijo por Nivel Educativo",
@@ -192,6 +185,58 @@ ggplot(datos, aes(x = urbano_rural, y = edad_primer_hijo)) +
   geom_boxplot(fill = "lightcoral", color = "darkred") +
   labs(title = "Edad del Primer Hijo por Área (Urbana/Rural)",
        x = "Área (Urbana/Rural)",
+       y = "Edad del Primer Hijo") +
+  theme_minimal()
+ggplot(datos, aes(x = pais, y = edad_primer_hijo)) +
+  geom_boxplot(fill = "lightblue", color = "darkblue") +
+  labs(title = "Edad del Primer Hijo por País (Colombia/Perú)",
+       x = "País",
+       y = "Edad del Primer Hijo") +
+  theme_minimal()
+ggplot(datos, aes(x = ocupacion, y = edad_primer_hijo)) +
+  geom_boxplot(fill = "orange", color = "red") +
+  labs(title = "Edad del Primer Hijo por Ocupación de la Mujer",
+       x = "Ocupación",
+       y = "Edad del Primer Hijo") +
+  theme_minimal()
+ggplot(datos, aes(x = conoc_metodo, y = edad_primer_hijo)) +
+  geom_boxplot(fill = "darkmagenta", color = "pink") +
+  labs(title = "Edad del Primer Hijo por Conocimiento de Métodos Anticonceptivos",
+       x = "Conocimiento de Métodos Anticonceptivos",
+       y = "Edad del Primer Hijo") +
+  theme_minimal()
+ggplot(datos, aes(x = uso_metodo, y = edad_primer_hijo)) +
+  geom_boxplot(fill = "brown4", color = "brown1") +
+  labs(title = "Edad del Primer Hijo por Uso de Métodos Anticonceptivos",
+       x = "Uso de Métodos Anticonceptivos",
+       y = "Edad del Primer Hijo") +
+  theme_minimal()
+```
+
+### Análisis Variables Numéricas vs Edad Primer Hijo
+
+```{r}
+glimpse(datos)
+summary(datos)
+
+num_data <- datos %>% select_if(is.numeric)
+correlacion<-round(cor(num_data), 1)
+corrplot(correlacion, method="number", type="upper")
+
+# library(GGally)
+# ggpairs(num_data, lower = list(continuous = "smooth"),
+#         diag = list(continuous = "barDiag"), axisLabels = "none")
+
+ggplot(datos, aes(x = riqueza, y = edad_primer_hijo)) +
+  geom_point() + geom_smooth() +
+  labs(title = "Edad del Primer Hijo por Índice de Riqueza Estandarizado",
+       x = "Índice de Riqueza Estandarizado",
+       y = "Edad del Primer Hijo") +
+  theme_minimal()
+ggplot(datos, aes(x = riqueza, y = edad_primer_hijo)) +
+  geom_point() + geom_smooth() +
+  labs(title = "Edad del Primer Hijo por Índice de Riqueza Estandarizado",
+       x = "Índice de Riqueza Estandarizado",
        y = "Edad del Primer Hijo") +
   theme_minimal()
 
