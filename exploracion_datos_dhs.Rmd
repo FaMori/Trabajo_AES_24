@@ -9,7 +9,6 @@ library(dplyr)
 library(ggplot2)
 library(ggpubr)
 library(kableExtra)
-library(corrplot)
 ```
 
 # Introducción 
@@ -161,7 +160,7 @@ desc_data %>%
 
 
 ## Análisis Exploratorio
-### Análisis de la Variable a Explicar
+
 ```{r}
 ggplot(datos, aes(x = edad_primer_hijo)) +
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
@@ -171,7 +170,6 @@ ggplot(datos, aes(x = edad_primer_hijo)) +
   theme_minimal()
 ```
 
-### Análisis Variables Categóricas vs Edad Primer Hijo
 
 ```{r}
 ggplot(datos, aes(x = factor(educacion), y = edad_primer_hijo)) +
@@ -211,35 +209,67 @@ ggplot(datos, aes(x = uso_metodo, y = edad_primer_hijo)) +
        x = "Uso de Métodos Anticonceptivos",
        y = "Edad del Primer Hijo") +
   theme_minimal()
+ggplot(datos, aes(x = factor(edad_primer_hijo), y = riqueza)) +
+     geom_boxplot(fill = "brown4", color = "brown1") +
+  labs(title = "Edad del Primer Hijo por riqueza",
+       x = "Edad del Primer Hijo",
+       y = "Riqueza") +
+  theme_minimal()
 ```
 
-### Análisis Variables Numéricas vs Edad Primer Hijo
 
 ```{r}
 glimpse(datos)
 summary(datos)
-
-num_data <- datos %>% select_if(is.numeric)
-correlacion<-round(cor(num_data), 1)
-corrplot(correlacion, method="number", type="upper")
-
-# library(GGally)
-# ggpairs(num_data, lower = list(continuous = "smooth"),
-#         diag = list(continuous = "barDiag"), axisLabels = "none")
-
-ggplot(datos, aes(x = riqueza, y = edad_primer_hijo)) +
-  geom_point() + geom_smooth() +
-  labs(title = "Edad del Primer Hijo por Índice de Riqueza Estandarizado",
-       x = "Índice de Riqueza Estandarizado",
-       y = "Edad del Primer Hijo") +
-  theme_minimal()
-ggplot(datos, aes(x = riqueza, y = edad_primer_hijo)) +
-  geom_point() + geom_smooth() +
-  labs(title = "Edad del Primer Hijo por Índice de Riqueza Estandarizado",
-       x = "Índice de Riqueza Estandarizado",
-       y = "Edad del Primer Hijo") +
-  theme_minimal()
-
 ```
 
+
+## Modelos
+
+```{r}
+library(tidymodels)
+library(ISLR)
+library(rpart.plot)
+library(vip)
+
+data <- datos %>% select(-caseid, -peso, -año, -cluster, -hogar, -SurveyId, -edad_muj, -años_residencia, -ideal_hijos)
+
+tree_spec <- decision_tree() %>%
+  set_engine("rpart")
+
+reg_tree_spec <- tree_spec %>%
+  set_mode("regression")
+
+reg_tree_fit <- reg_tree_spec %>%
+  fit(edad_primer_hijo ~ ., data = data)
+
+reg_tree_fit
+
+reg_tree_fit %>%
+  extract_fit_engine() %>%
+  rpart.plot(roundint=FALSE)
+
+set.seed(1899)
+data_split <- initial_split(data)
+
+data_train <- training(data_split)
+data_test <- testing(data_split)
+
+library(randomForest)
+rf_spec <- rand_forest(trees = 1000) %>%
+  set_engine("randomForest") %>%
+  set_mode("regression")
+
+rf_wf <- workflow() %>%
+  add_model(rf_spec) %>%
+  add_formula(edad_primer_hijo ~ .)
+rf_fit <- fit(rf_spec, edad_primer_hijo ~ ., data = data_train)
+rf_fit 
+
+vip(rf_fit)
+
+augment(rf_fit, new_data = data_test) %>%
+  rmse(truth = edad_primer_hijo, estimate = .pred)
+
+```
 
