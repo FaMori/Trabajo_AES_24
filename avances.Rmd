@@ -1,0 +1,135 @@
+---
+title: "Avances"
+output: html_document
+---
+
+### 17/11
+
+# SACAR DEL FILTRO DE LOS DATOS edad_muj %in% 18:28
+# REVISAR TUNEO
+# ELEGIR QUE GRAFICOS DEJAR (CAMBIAR ETIQUETAS Y COLORES)
+
+
+```{r mas graficos}
+ggplot(datos, aes(x = edad_primer_hijo)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  facet_grid(pais ~ .) +
+  labs(title = "Distribución de la Edad del Primer Hijo",
+       x = "Edad del Primer Hijo",
+       y = "Frecuencia") +
+  theme_minimal()
+
+ggplot(datos, aes(x = edad_primer_hijo)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  facet_grid(ocupacion ~ .) +
+  labs(title = "Distribución de la Edad del Primer Hijo",
+       x = "Edad del Primer Hijo",
+       y = "Frecuencia") +
+  theme_minimal()
+
+ggplot(datos, aes(x = ocupacion, y = edad_primer_hijo, fill = pais)) +
+  geom_boxplot() +
+  labs(title = "Edad del Primer Hijo por Ocupación y País",
+       x = "Ocupación",
+       y = "Edad del Primer Hijo",
+       fill = "País") +
+  theme_minimal()
+
+ggplot(datos, aes(x = uso_metodo, y = edad_primer_hijo)) +
+  geom_boxplot(fill = "lightgreen", color = "darkgreen") +
+  facet_wrap(~ pais) +
+  labs(title = "Edad del Primer Hijo por Uso de Métodos Anticonceptivos y País",
+       x = "Uso de Métodos Anticonceptivos",
+       y = "Edad del Primer Hijo",
+       color = "Uso de Métodos") +
+  theme_minimal()
+
+ggplot(datos, aes(x = factor(educacion), y = edad_primer_hijo)) +
+  geom_boxplot(fill = "lightgreen", color = "darkgreen") +
+  facet_grid(pais ~ .) + 
+  labs(title = "Distribución de Edad del Primer Hijo por Nivel Educativo y País",
+       x = "Nivel Educativo",
+       y = "Edad del Primer Hijo") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(datos, aes(x = factor(edad_primer_hijo), y = riqueza)) +
+  geom_boxplot(fill = "lightgreen", color = "darkgreen") +
+  facet_grid(pais ~ .) +
+  labs(title = "Relación entre Edad del Primer Hijo y Riqueza por País",
+       x = "Edad del Primer Hijo",
+       y = "Riqueza") +
+  theme_minimal()
+
+ggplot(datos, aes(x = factor(edad_primer_hijo), y = educacion)) +
+  geom_boxplot(fill = "lightgreen", color = "darkgreen") +
+  facet_grid(pais ~ .) +
+  labs(title = "Relación entre Edad del Primer Hijo y Educación por País",
+       x = "Edad del Primer Hijo",
+       y = "Educación") +
+  theme_minimal()
+
+ggplot(datos, aes(x = uso_metodo, y = edad_primer_hijo)) +
+  geom_boxplot(fill = "lightgreen", color = "darkgreen") +
+  facet_grid(conoc_metodo ~ .) +
+  labs(title = "Edad del Primer Hijo por Uso de Métodos Anticonceptivos y Conocimiento de los Métodos",
+       x = "Uso de Métodos Anticonceptivos",
+       y = "Edad del Primer Hijo") +
+  theme_minimal()
+
+```
+
+
+```{r RF}
+data_recipe <- recipe(edad_primer_hijo ~ ., data = data) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+rf_spec <- rand_forest(trees = 1000) %>%
+  set_engine("randomForest") %>%
+  set_mode("regression")
+
+rf_wf <- workflow() %>%
+  add_recipe(data_recipe) %>%
+  add_model(rf_spec)
+
+rf_fit <- fit(rf_wf, data = data_train)
+
+augment(rf_fit, new_data = data_test) %>% 
+  rmse(truth = edad_primer_hijo, estimate = .pred)
+
+```
+
+```{r TUNEO (DEMORA MUCHO!)}
+set.seed(1899)
+rf_wf <- workflow() %>%
+  add_model(rand_forest(mtry = tune(), trees = 500
+                        # , min_n = tune()
+                        ) %>% 
+              set_engine("randomForest", importance = TRUE) %>% 
+              set_mode("regression")) %>%
+  add_formula(edad_primer_hijo ~ .)
+
+rf_fold <- vfold_cv(data_train, 5)
+
+param_grid <- grid_regular(
+  mtry(range = c(2, 6)),
+  # min_n(range = c(2, 20)),
+  levels = 3
+)
+
+tune_res <- tune_grid(
+  rf_wf, 
+  resamples = rf_fold, 
+  grid = param_grid, 
+  metrics = metric_set(rmse)
+)
+
+autoplot(tune_res)
+
+best_params <- select_best(tune_res, metric = "rmse")
+final_rf_wf <- finalize_workflow(rf_wf, best_params)
+
+rf_final_fit <- fit(final_rf_wf, data = data_train)
+
+```
+
