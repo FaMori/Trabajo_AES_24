@@ -1,0 +1,201 @@
+---
+title: "Modelado de variables demograficas mediante algoritmos de aprendizaje supervisado"
+format: pdf
+---
+
+```{r setup, include=F, message=F, warning=F}
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(kableExtra)
+library(tidymodels)
+
+```
+
+
+# Introducción 
+
+Cuando se trabaja con modelos de micro-simulación en demografía, como puede ser el modelado de las tasas específicas de fecundidad por edad (ASFR), uno de los factores usualmente contemplado es la edad en que las mujeres comienzan a tener riesgo a concebir. En ese sentido, modelar la edad en que una cohorte de mujeres experimenta su primer nacimiento o cuando comienzan a tener relaciones sexuales es un factor que puede ser de utilidad para este tipo de simulación.
+
+En este caso se explora el uso de un modelo de regresión para predecir la edad al primer hijo de las mujeres y otro de clasificación para predecir si una mujer comienza a tener relaciones sexuales antes o despues de cierta edad. Se utilizaran principalmente modelos basados en arbóles de decisión, como CART, Bagging y Random Forest.
+
+Los datos utilizados pertenecen a las encuestas DHS, realizada principalmente en países en vias de desarrollo, donde se tomaran las encuestas VI y VII, realizadas entre los años 2010-2020, se utilizaran los datos de varios paises de distintas regiones para visualizar el efecto de las variables de interes en precencia de contextos socioculturales y economicos muy distintos.
+
+# Análisis exploratorio
+
+## Fuente de los datos
+
+Como se menciono en la introducción los datos provienen de las encuestas DHS, el Programa de Encuestas Demográficas y de Salud (DHS) es responsable de recopilar y difundir datos precisos y representativos a nivel nacional sobre salud y población en países en desarrollo. El proyecto es financiado por la Agencia de los Estados Unidos para el Desarrollo Internacional (USAID).
+
+La idea detrás es ayudar a los distintos países sobre todo del continente africano a dar asistencia técnica para la implementación de encuestas demográficas y de salud, donde se recolecta información sobre la fecundidad, planificación familiar, salud maternal e infantil y otros temas de salud como la malaria o el VIH que son de interés en gran parte de los países que contempla la encuesta.
+
+## Descripción de los datos
+
+Los datos utilizados en esta ocasión corresponden a 10 paises de distintas regiones del mundo:
+
+- America Latina y el Caribe: Peru, Haiti, Guatemala y República Dominicana.
+- Europa del este: Albania y Armenia.
+- Norte y Sur de Africa: Etiopia, Ghana, Sudáfrica y Angola.
+
+En este caso se tiene un total de casi 150 mil observaciones que corresponden a mujeres de entre 15 y 64 años, donde se tienen variables de aspectos economicos, sociales y de salud reproductiva. En este caso se trabaja con 17 variables en total que se detallan a continuacion:
+
+```{r}
+datos_dhs <- read.csv('datos/dhs_6_7.csv') %>%
+mutate(v000 = as.factor(case_when(v000 == 'AL7' ~ 'Albania',
+v000 == 'AM7' ~ 'Armenia',v000 == 'AO7' ~ 'Angola',
+v000 == 'ET7' ~ 'Etiopia',v000 == 'GH6' ~ 'Ghana',
+v000 == 'GU6' ~ 'Guatemala', v000 == 'HT7' ~ 'Haiti',
+v000 == 'PE6' ~ 'Perú', v000 == 'DR6' ~ 'República Dominicana', v000 == 'ZA7' ~ 'Sudáfrica')),v005=as.numeric(v005), v007=as.numeric(v007),v012=as.numeric(v012),v102=as.factor(v102),v119 = as.factor(case_when(v119 %in% c(7,9) ~ NA, T~v119)),v121 = as.factor(case_when(v121 %in% c(7,9) ~ NA, T~v121)),v133=as.numeric(case_when(v133 %in% 97:99~ NA,T~v133)),v136=as.numeric(v136),v157=as.factor(case_when(v157 == 9 ~ NA,v157 %in% c(1,2) ~ 1,v157 == 3 ~ 2, T~v157)),v191=as.numeric(v191),v212=as.numeric(v212),v301=as.factor(v301),v525=as.numeric(case_when(v525 %in% 96:99 ~ NA, T~v525)),v714=as.factor(case_when(v714 == 9 ~NA,T~v714)),v836=as.numeric(case_when(v836 %in% 96:99 ~ NA, T~v836)))
+
+cod_variables <- names(datos_dhs)
+
+name_variables <-c('pais','ponderador','anio','edad','urbano','electricidad','tv','anio_educ','tot_fam','leer','ind_riqueza','edad_phijo','con_antic','edad_psexo','trabajo','n_parejas')
+
+desc_variables <- c(
+  'País donde se realizó la encuesta',
+  'Peso de la mujer en la encuesta, número entero de 8 dígitos, donde 6 dígitos corresponden a decimales',
+  'Año en que se realizó la encuesta',
+  'Edad de la mujer encuestada',
+  'Indica si la mujer es de área urbana o rural',
+  'Indica si el hogar tiene acceso a electricidad',
+  'El hogar dispone de una televisión',
+  'Total años de educación de la mujer, se calcula a partir del nivel máximo de educación alcanzado, es un valor comparable entre países.',
+  'Total de personas que viven en el hogar',
+  'Frecuencia con que la mujer lee un periódico, revista o libro',
+  'Indicador de riqueza del hogar estandarizado, se calcula a partir de distintas medidas como materiales de construcción de la casa y servicios disponibles, su calculo puede variar entre paises.',
+  'Edad de la mujer al primer hijo',
+  'Conocimiento de algún método anticonceptivo, donde se distingue entre modernos (ej: Condon, pastillas, parches, etc.), tradicionales (ej: Coito interrumpido, calendario, etc.) y folklóricos (ej: Amuletos, rituales, etc.)',
+  'Edad de la mujer al primer acto sexual',
+  'Indica si la mujer actualmente trabaja',
+  'Cantidad de parejas sexuales que ha tenido la mujer'
+)
+
+tipo_variables <- c(
+  'Categórica',
+  'Numérica Entera',
+  'Numérica Entera',
+  'Numérica Entera',
+  'Categórica',
+  'Categórica',
+  'Categórica',
+  'Numérica Entera',
+  'Numérica Entera',
+  'Categórica',
+  'Numérica Entera',
+  'Numérica Entera',
+  'Categórica',
+  'Numérica Entera',
+  'Categórica',
+  'Numérica Entera'
+)
+
+rec_variables <- c('10 paises',' ',paste0(min(datos_dhs$v007),'-',max(datos_dhs$v007)),paste0(min(datos_dhs$v012),'-',max(datos_dhs$v012)),'1:Urbano, 2:Rural','0:No, 1:Si','0:No, 1:Si',paste0(min(datos_dhs$v133,na.rm = T),'-',max(datos_dhs$v133,na.rm = T)),paste0(min(datos_dhs$v136),'-',max(datos_dhs$v136)),'0:Nada, 1:Ocasional, 2:Todos los días',paste0(min(datos_dhs$v191,na.rm = T),'-',max(datos_dhs$v191,na.rm = T)),paste0(min(datos_dhs$v212,na.rm = T),'-',max(datos_dhs$v212,na.rm = T)),'0: Ninguno, 1:Folklórico, 2:Tradicional, 3:Moderno',paste0(min(datos_dhs$v525,na.rm = T),'-',max(datos_dhs$v525,na.rm = T)),'0: No, 1: Si',paste0(min(datos_dhs$v836,na.rm = T),'-',max(datos_dhs$v836,na.rm = T)))
+                   
+                   
+tabla_variables <- data.frame(cod_variables, name_variables,desc_variables,tipo_variables,rec_variables) 
+
+names(datos_dhs) <- name_variables 
+```
+
+```{r}
+kable(tabla_variables, caption = 'Descripción de las variables disponibles en el trabajo', col.names = c('Codigo DHS','Nombre','Descripción','Tipo','Recorrido'), align = 'ccllc', booktabs = TRUE) %>% 
+  kable_styling(latex_options = "striped", font_size = 8, position = "center") %>% column_spec(3, width = '25em') %>%
+  column_spec(5, width = '10em') %>% column_spec(c(1,2), width = '5em')
+```
+
+Antes de realizar el analisis exploratorio se procede a limpiar los datos, se debe tener la precaución de eliminar todas las codificaciones de no respuesta como 99 para que no afecten a las variables numericas. En cuanto a las variables de interes, como edad de la mujer al primer hijo se procede a filtrar las observaciones demasiado extremas o que no tengan sentido desde el punto de vista biologico como un valor de 3 años, en este caso se toma solamente a las mujeres que tuvieron su primer hijo a partir de los 15 años.
+En cuanto a la otra variable de interes edad a la primera relación sexual, se opta por filtrar a las mujeres que indicaron valores menores a 10 años nuevamente para evitar casos muy atipicos o errores en el ingreso del dato.
+
+```{r}
+datos_phijo <- datos_dhs %>% na.omit() %>% filter(edad_phijo >= 11) 
+
+datos_psexo <- datos_dhs %>% na.omit() %>% filter(edad_psexo >= 10) %>% mutate(psexo_16 = case_when(edad_psexo < 16 ~ 0, T~1))
+```
+
+### Variables de interes por pais
+
+```{r, fig.align='center', fig.cap='Grafico violín, distribución de la edad al primer hijo por país', fig.height=6, fig.width=10}
+datos_phijo %>% 
+mutate(pais = forcats::fct_reorder(pais, edad_phijo, .fun = mean))%>%
+  ggplot(aes(x=edad_phijo,y=pais,fill=pais)) + geom_violin() + theme_minimal() + labs(x = 'Edad al primer hijo', y = 'País') + theme(legend.position = 'none') + scale_fill_viridis_d()
+```
+
+```{r}
+datos_phijo %>%  mutate(edad_phijo = cut(edad_phijo, breaks = seq(10, 49, 3))) %>%
+ggplot(aes(x = as.factor(edad_phijo), y=	ind_riqueza,fill=urbano)) +
+  geom_boxplot(color = "grey") +
+  labs(x = "Edad al Primer Hijo",
+       y = "Indicador de Riqueza") +
+  theme_minimal() + scale_fill_viridis_d(name = "Zona", labels = c("Urbano", "Rural"))
+```
+
+# Edad al Primer Hijo variables comportamiento sexual
+
+```{r}
+datos_phijo %>% filter(anio_educ < 22) %>%
+ggplot(aes(x = edad_phijo, color = anio_educ, group=anio_educ)) + geom_density(linewidth=0.8) +
+  labs(x = "Edad al Primer Hijo",
+       y = "Frecuencia") +
+  theme_minimal() + scale_color_viridis_c(name = "Años de Educación")
+```
+
+```{r}
+datos_phijo %>% mutate(psexo_16 = as.factor(case_when(edad_psexo < 16 ~ 0, T~1)))  %>%
+  filter(anio_educ < 20) %>%
+ggplot(aes(y = edad_phijo, x=	as.factor(anio_educ),fill=psexo_16)) +
+  geom_boxplot(color = "grey") +
+  labs(x = "Años de educación",
+       y = "Edad al Primer Hijo") +
+  theme_minimal() + scale_fill_viridis_d(name = "Edad primer act. sexual", labels = c("< 16 años", "> 16 años"))
+```
+
+```{r}
+datos_split <- initial_split(datos, 
+                              strata = pais,
+                              prop = 0.85) 
+
+datos_train <- training(datos_split)
+datos_test <- testing(datos_split)
+
+datos_recipe <- recipe(edad_phijo ~ pais + urbano + edad_psexo + anio_educ + leer + ind_riqueza + con_antic + n_parejas, data = datos_train) %>%
+  step_normalize(all_numeric_predictors())
+```
+
+
+```{r}
+bagging_spec <- rand_forest(mtry =.cols(), min_n=tune(),  trees=tune()) %>%
+  set_engine('ranger', importance = "permutation", num.threads=6) %>%
+  set_mode('regression')
+
+bagging_workflow <- workflow() %>%
+  add_model(bagging_spec) %>%
+  add_recipe(datos_recipe)
+```
+
+```{r, eval=F}
+# num.threads = 32 -> 31 min aprox.
+bagging_grid <- grid_regular(min_n(range = c(10, 500)),
+                       trees(range = c(10, 2000)),levels=5)
+
+bagging_cv <- vfold_cv(datos_train, v = 10)
+
+bagging_tune <- tune_grid(bagging_wf, resamples = bagging_cv, grid = bagging_grid)
+```
+
+```{r}
+bagging_spec <- rand_forest(mtry =.cols(), min_n=130,  trees=1000) %>%
+  set_engine('ranger', importance = "permutation", num.threads=6) %>%
+  set_mode('regression')
+
+bagging_workflow <- workflow() %>%
+  add_model(bagging_spec) %>%
+  add_recipe(datos_recipe)
+
+bagging_fit <- fit(bagging_workflow, data = datos_train)
+```
+
+```{r}
+library(vip)
+vip(bagging_fit) + theme_minimal()
+```
