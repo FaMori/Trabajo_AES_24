@@ -113,6 +113,7 @@ datos_phijo <- datos_dhs %>% na.omit() %>% filter(edad_phijo >= 11)
 datos_psexo <- datos_dhs %>% na.omit() %>% filter(edad_psexo >= 10) %>% mutate(psexo_16 = case_when(edad_psexo < 16 ~ 0, T~1))
 ```
 
+El primer paso del análisis exploratorio de las variables a utilizar en el modelo será realizar gráficos comparando las dos variables de interés escogidas con las variables explicativas que formarán parte del modelo. De esta manera, se puede obtener una primera observación del efecto que podría tener cada variable con respecto a las variables de interés.
 ### Variables de interes por pais
 
 ```{r, fig.align='center', fig.cap='Grafico violín, distribución de la edad al primer hijo por país', fig.height=6, fig.width=10}
@@ -120,8 +121,10 @@ datos_phijo %>%
 mutate(pais = forcats::fct_reorder(pais, edad_phijo, .fun = mean))%>%
   ggplot(aes(x=edad_phijo,y=pais,fill=pais)) + geom_violin() + theme_minimal() + labs(x = 'Edad al primer hijo', y = 'País') + theme(legend.position = 'none') + scale_fill_viridis_d()
 ```
+En este primer gráfico se puede observar como, dependiendo de que país sea la mujer encuestada, varía la edad que tenían al momento en que nació su primer hijo. En países como Angola, Etiopía, Guatemala o Dominicana, la gran mayoría de las mujeres encuestadas tiene su primer hijo con veinte años o menos, mientras que en países como Armenia o Albania, sucede lo contrario. Este gráfico nos da un indicio a considerar inicialmente la variable del país de la mujer en el modelo.
 
-```{r}
+
+```{r fig.align='center', fig.cap='Grafico Caja, distribución de la edad al primer hijo por Índice de Riqueza y Zona del país', fig.height=6, fig.width=10}
 datos_phijo %>%  mutate(edad_phijo = cut(edad_phijo, breaks = seq(10, 49, 3))) %>%
 ggplot(aes(x = as.factor(edad_phijo), y=	ind_riqueza,fill=urbano)) +
   geom_boxplot(color = "grey") +
@@ -129,10 +132,12 @@ ggplot(aes(x = as.factor(edad_phijo), y=	ind_riqueza,fill=urbano)) +
        y = "Indicador de Riqueza") +
   theme_minimal() + scale_fill_viridis_d(name = "Zona", labels = c("Urbano", "Rural"))
 ```
+En el gráfico anterior se puede observar como, en zonas urbanas, mientras más tarde una mujer tenga su primer hijo, mayor es su riqueza, hasta que luego de los treinta y siete años arranca a decaer el índice de riqueza nuevamente, pero para estas edades ya se cuenta con menos observaciones. En el caso de zonas rurales, esta relación no parece tan clara y el Índice de Riqueza se mantiene aproximadamente en el mismo nivel para todas las franjas de edades al primer hijo que se formaron.
+
 
 # Edad al Primer Hijo variables comportamiento sexual
 
-```{r}
+```{r fig.align='center', fig.cap='Grafico Líneas, distribución de la edad al primer hijo por Años de Educación de la Madre', fig.height=6, fig.width=10}
 datos_phijo %>% filter(anio_educ < 22) %>%
 ggplot(aes(x = edad_phijo, color = anio_educ, group=anio_educ)) + geom_density(linewidth=0.8) +
   labs(x = "Edad al Primer Hijo",
@@ -140,7 +145,9 @@ ggplot(aes(x = edad_phijo, color = anio_educ, group=anio_educ)) + geom_density(l
   theme_minimal() + scale_color_viridis_c(name = "Años de Educación")
 ```
 
-```{r}
+La anterior visualización corresponde a un gráfico de densidad de la edad al primer hijo donde cada línea corresponde a la cantidad de años de eucación que tuvo la madre. En este caso, se puede observar claramente un corrimiento hacia la derecha de las medias de la distribución a medida que la mujer tiene más años de educación. Esto indica que mientras más estudios tienen las mujeres, más demoran en tener su primer hijo.
+
+```{r fig.align='center', fig.cap='Grafico Caja, distribución de la edad al primer hijo por Años de Educación de la Madre y por comienzo de relaciones sexuales', fig.height=6, fig.width=10}
 datos_phijo %>% mutate(psexo_16 = as.factor(case_when(edad_psexo < 16 ~ 0, T~1)))  %>%
   filter(anio_educ < 20) %>%
 ggplot(aes(y = edad_phijo, x=	as.factor(anio_educ),fill=psexo_16)) +
@@ -149,6 +156,8 @@ ggplot(aes(y = edad_phijo, x=	as.factor(anio_educ),fill=psexo_16)) +
        y = "Edad al Primer Hijo") +
   theme_minimal() + scale_fill_viridis_d(name = "Edad primer act. sexual", labels = c("< 16 años", "> 16 años"))
 ```
+
+Por último, a la visualización del gráfico anterior, se le agregó una segregación por una variable binaria que indica si la mujer encuestada comenzo a tener relaciones sexuales antes o después de los dieciséis años. Se sigue observando la misma relación de que a mayor años de educación, más demoran las mujeres en tener su primer hijo, pero también se le agrega una diferencia en la edad que las mujeres comienzan a tener relaciones sexuales. Se ve claramente que las mujeres que comienzan luego de los dieciséis años, la distribución indica que generalmente tienen su primer hijo más tarde que las mujeres que comienzan antes.
 
 ```{r}
 datos_split <- initial_split(datos, 
