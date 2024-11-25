@@ -159,8 +159,10 @@ ggplot(aes(y = edad_phijo, x=	as.factor(anio_educ),fill=psexo_16)) +
 
 Por último, a la visualización del gráfico anterior, se le agregó una segregación por una variable binaria que indica si la mujer encuestada comenzo a tener relaciones sexuales antes o después de los dieciséis años. Se sigue observando la misma relación de que a mayor años de educación, más demoran las mujeres en tener su primer hijo, pero también se le agrega una diferencia en la edad que las mujeres comienzan a tener relaciones sexuales. Se ve claramente que las mujeres que comienzan luego de los dieciséis años, la distribución indica que generalmente tienen su primer hijo más tarde que las mujeres que comienzan antes.
 
+# Modelado de la edad al primer hijo
+
 ```{r}
-datos_split <- initial_split(datos, 
+datos_split <- initial_split(datos_phijo, 
                               strata = pais,
                               prop = 0.85) 
 
@@ -171,6 +173,8 @@ datos_recipe <- recipe(edad_phijo ~ pais + urbano + edad_psexo + anio_educ + lee
   step_normalize(all_numeric_predictors())
 ```
 
+
+# Bagging
 
 ```{r}
 bagging_spec <- rand_forest(mtry =.cols(), min_n=tune(),  trees=tune()) %>%
@@ -193,6 +197,29 @@ bagging_tune <- tune_grid(bagging_wf, resamples = bagging_cv, grid = bagging_gri
 ```
 
 ```{r}
+load('datos/bagging_tune.RData')
+```
+
+```{r}
+bagg_tune %>% select(trees,min_n,.metric,mean) %>%
+  filter(.metric == "rmse") %>%
+  ggplot(aes(x = min_n, y = mean, color = as.factor(trees), group=as.factor(trees))) +
+  geom_line() +
+  scale_color_viridis_d(name='Cantidad de arboles') +
+  labs(x = "Número mínimo de observaciones por nodo", y = "RMSE", fill = "RMSE") +
+  theme_minimal()
+
+bagg_tune %>% select(trees,min_n,.metric,mean) %>%
+  filter(.metric == "rsq") %>%
+  ggplot(aes(x = min_n, y = mean, color = as.factor(trees), group=as.factor(trees))) +
+  geom_line() +
+  scale_color_viridis_d(name='Cantidad de arboles') +
+  labs(x = "Número mínimo de observaciones por nodo", y = "RSQ", fill = "RMSE") +
+  theme_minimal()
+```
+
+
+```{r}
 bagging_spec <- rand_forest(mtry =.cols(), min_n=130,  trees=1000) %>%
   set_engine('ranger', importance = "permutation", num.threads=6) %>%
   set_mode('regression')
@@ -204,7 +231,147 @@ bagging_workflow <- workflow() %>%
 bagging_fit <- fit(bagging_workflow, data = datos_train)
 ```
 
+## Importancia de las variables
+
 ```{r}
 library(vip)
 vip(bagging_fit) + theme_minimal()
 ```
+
+```{r}
+augment(bagging_fit, new_data = datos_test) %>%
+  ggplot(aes(x = .pred, y = edad_phijo)) +
+  geom_point() +
+  geom_abline(color='red') +
+  labs(x = "Predicción", y = "Real") + coord_fixed(ratio=1) +
+  theme_minimal()
+```
+
+```{r}
+residuals <- augment(bagging_fit, new_data=datos_train) %>%
+  mutate(residuals = .pred - edad_phijo) %>%
+  select(residuals, .pred, edad_phijo)
+
+residuals %>% ggplot(aes(x = .pred, y = residuals)) +
+  geom_point() + geom_hline(yintercept = 0, color = 'red') +
+  labs(x = "Predicción", y = "Residuos") +
+  theme_minimal()
+```
+
+# Random Forest
+
+```{r}
+rf_spec <- rand_forest(mtry =.cols(), min_n=tune(),  trees=tune()) %>%
+  set_engine('ranger', importance = "permutation", num.threads=6) %>%
+  set_mode('regression')
+
+rf_workflow <- workflow() %>%
+  add_model(rf_spec) %>%
+  add_recipe(datos_recipe)
+```
+
+```{r}
+load('datos/rf_tune.RData')
+```
+
+```{r}
+rf_spec <- rand_forest(mtry =5, min_n=130,  trees=2000) %>%
+  set_engine('ranger', importance = "permutation", num.threads=6) %>%
+  set_mode('regression')
+
+rf_workflow <- workflow() %>%
+  add_model(rf_spec) %>%
+  add_recipe(datos_recipe)
+
+rf_fit <- fit(rf_workflow, data = datos_train)
+```
+
+```{r}
+vip(rf_fit) + theme_minimal()
+```
+
+```{r}
+augment(rf_fit, new_data = datos_test) %>%
+  ggplot(aes(x = .pred, y = edad_phijo)) +
+  geom_point() +
+  geom_abline(color='red') +
+  labs(x = "Predicción", y = "Real") + coord_fixed(ratio=1) +
+  theme_minimal()
+```
+
+```{r}
+residuals <- augment(rf_fit, new_data=datos_train) %>%
+  mutate(residuals = .pred - edad_phijo) %>%
+  select(residuals, .pred, edad_phijo)
+
+residuals %>% ggplot(aes(x = .pred, y = residuals)) +
+  geom_point() + geom_hline(yintercept = 0, color = 'red') +
+  labs(x = "Predicción", y = "Residuos") +
+  theme_minimal()
+```
+
+
+# CART
+
+```{r}
+cart_spec <- decision_tree(cost_complexity = tune(),
+                           min_n = tune(),
+                           tree_depth = tune()) %>%
+  set_engine('rpart') %>%
+  set_mode('regression')
+
+cart_workflow <- workflow() %>%
+  add_model(cart_spec) %>%
+  add_recipe(datos_recipe)
+
+cart_grid <- grid_regular(cost_complexity(range = c(0.001, 0.2), trans=NULL),
+                          min_n(range = c(10, 500)),
+                          tree_depth(range = c(1, 20)),levels=5)
+
+cart_cv <- vfold_cv(datos_train, v = 10)
+
+cart_tune <- tune_grid(cart_workflow, resamples = cart_cv, grid = cart_grid)
+```
+```{r}
+cart_tune
+```
+
+
+```{r}
+best_cart <- cart_tune %>% select_best(metric='rmse')
+```
+
+```{r}
+cart <- finalize_workflow(cart_workflow ,best_cart)
+
+cart_fit <- fit(cart, data = datos_train)
+```
+
+
+
+```{r}
+vip(cart_fit) + theme_minimal()
+```
+
+
+```{r}
+augment(cart_fit, new_data = datos_test) %>%
+  ggplot(aes(x = .pred, y = edad_phijo)) +
+  geom_point() +
+  geom_abline(color='red') +
+  labs(x = "Predicción", y = "Real") + coord_fixed(ratio=1) +
+  theme_minimal()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
