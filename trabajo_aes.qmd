@@ -30,7 +30,7 @@ Los datos utilizados para este propósito provienen de las encuestas DHS, realiz
 
 ## Fuente de los datos
 
-Como se menciono en la introducción los datos provienen de las encuestas DHS[^1], el Programa de Encuestas Demográficas y de Salud (DHS) es responsable de recopilar y difundir datos precisos y representativos a nivel nacional sobre salud y población en países en desarrollo. 
+Como se mencionó en la introducción, los datos provienen de las encuestas DHS[^1], el Programa de Encuestas Demográficas y de Salud (DHS) es responsable de recopilar y difundir datos precisos y representativos a nivel nacional sobre salud y población en países en desarrollo. 
 
 La idea detrás es ayudar a los distintos países sobre todo del continente africano a dar asistencia técnica para la implementación de encuestas demográficas y de salud, donde se recolecta información sobre la fecundidad, planificación familiar, salud maternal e infantil y otros temas de salud como la malaria o el VIH que son de interés en gran parte de los países que contempla la encuesta.
 
@@ -44,7 +44,7 @@ Como primer paso, debido a la magnitud de la encuesta, que abarca un gran númer
 - Europa del este: Albania y Armenia.
 - Norte y Sur de África: Etiopía, Ghana, Sudáfrica y Angola.
 
-En este caso, se dispone de un total de aproximadamente 150,000 observaciones correspondientes a mujeres de entre 15 y 64 años. Estas observaciones incluyen variables relacionadas con aspectos económicos, sociales y de salud reproductiva. Una complicación presente en los datos es que las disponibilidad de las distintas variables pueden variar de un país al otro y el proceso de descarga si se seleccionan demasiadas variables puede ser muy lento. Por esta razón se realizo un filtrado previo de las variables a utilizar. Como resultado, se trabaja principalmente con 17 variables que están disponibles para todos los países seleccionados y que, a priori, se consideran las más relevantes para el análisis. Algunas de estas variables no se emplean como predictores, pero resultan útiles en otros aspectos, como el peso muestral de las mujeres en la encuesta, que puede ser incorporado en el modelo.
+En este caso, se dispone de un total de aproximadamente 150,000 observaciones correspondientes a mujeres de entre 15 y 64 años. Estas observaciones incluyen variables relacionadas con aspectos económicos, sociales y de salud reproductiva. Una complicación presente en los datos es que las disponibilidad de las distintas variables pueden variar de un país al otro y el proceso de descarga si se seleccionan demasiadas variables puede ser muy lento. Por esta razón se realizó un filtrado previo de las variables a utilizar. Como resultado, se trabaja principalmente con 17 variables que están disponibles para todos los países seleccionados y que, a priori, se consideran las más relevantes para el análisis. Algunas de estas variables no se emplean como predictores, pero resultan útiles en otros aspectos, como el peso muestral de las mujeres en la encuesta, que puede ser incorporado en el modelo.
 
 ```{r}
 datos_dhs <- read.csv('datos/dhs_6_7.csv') %>%
@@ -124,13 +124,13 @@ datos_psexo <- datos_dhs %>% na.omit() %>% filter(edad_psexo >= 10) %>% mutate(p
 
 ## Edad al primer hijo
 
-La edad en que las mujeres comienzan a tener hijos esta influenciada por una serie de factores en los que se encuentran comportamiento sociales como también por aspectos económicos y culturales. En la biblografia suelen mencionarse algunos factores que están fuertemente vinculados a los procesos de fecundidad, como la mayor participación en el mercado laboral, el acceso a la educación de las mujeres y la planificación familiar/uso de métodos anticonceptivos.
+La edad en que las mujeres comienzan a tener hijos está influenciada por una serie de factores en los que se encuentran comportamientos sociales como también por aspectos económicos y culturales. En la bibliografía suelen mencionarse algunos factores que están fuertemente vinculados a los procesos de fecundidad, como la mayor participación en el mercado laboral, el acceso a la educación de las mujeres, la planificación familiar y el uso de métodos anticonceptivos.
 
-En la @fig-phijo_xpais se puede observar como, dependiendo de que país sea la mujer encuestada, varía la edad que tenían al momento en que nació su primer hijo, algo esperable viniendo de paises con contextos muy distintos. En países como Angola, Etiopía, Guatemala o Dominicana, hay una gran parte de las mujeres encuestadas tiene su primer hijo con veinte años o menos, mientras que en países del Este de Europa algo mas desarrollados como Armenia o Albania, la edad al primer hijo tiende a ser mayor con una media por encima de los 20 años, patrón que es usualmente se observa mientras mas desarrollo mas se atrasa todos los procesos relacionados con la fecundidad. Mas halla de las diferencias, existe una gran concentración de mujeres que tienen su primer hijo entre los 18 y 23 años en todos los países.
+En la @fig-phijo_xpais se puede observar como, dependiendo de que país sea la mujer encuestada, varía la edad que tenían al momento en que nació su primer hijo, algo esperable viniendo de paises con contextos muy distintos. En países como Angola, Etiopía, Guatemala o Dominicana, hay una gran parte de las mujeres encuestadas que tiene su primer hijo con veinte años o menos, mientras que en países del Este de Europa algo más desarrollados como Armenia o Albania, la edad al primer hijo tiende a ser mayor con una media por encima de los 20 años, patrón que usualmente se observa mientras más desarrollo más se atrasan todos los procesos relacionados con la fecundidad. Más allá de las diferencias, existe una gran concentración de mujeres que tienen su primer hijo entre los 18 y 23 años en todos los países.
 
 ```{r phijo_xpais}
 #| label: fig-phijo_xpais
-#| fig-cap: "Grafico violín, distribución de la edad al primer hijo por país, donde el punto indica la edad media."
+#| fig-cap: "Gráfico violín, distribución de la edad al primer hijo por país, donde el punto indica la edad media."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -144,11 +144,11 @@ mutate(pais = forcats::fct_reorder(pais, edad_phijo, .fun = mean))%>%
                color = "lightgrey") + theme_minimal() + labs(x = 'Edad al primer hijo', y = 'País') + theme(legend.position = 'none') + scale_fill_viridis_d()
 ```
 
-Uno de los factores mas importantes en el proceso del desplazamiento de la fecundidad a edades mas avanzadas es el logro educativo de las mujeres. Esto es algo que en los datos utilizados en este trabajo debería poder ser captado. En la @fig-edu_att se observa la distribución de la edad al primer hijo donde cada línea corresponde a la cantidad de años de educación que tuvo la madre. En este caso, se puede observar claramente un corrimiento hacia la derecha de las modas de la distribución a medida que la mujer tiene más años de educación. Esto indica que mientras más estudios tienen las mujeres, más aplazan el momento de tener su primer hijo. Con lo cual en un principio esta variable debería ser útil para predecir la variable de interés.
+Uno de los factores más importantes en el proceso del desplazamiento de la fecundidad a edades más avanzadas es el logro educativo de las mujeres. Esto es algo que en los datos utilizados en este trabajo debería poder ser captado. En la @fig-edu_att se observa la distribución de la edad al primer hijo donde cada línea corresponde a la cantidad de años de educación que tuvo la madre. En este caso, se puede observar claramente un corrimiento hacia la derecha de las modas de la distribución a medida que la mujer tiene más años de educación. Esto indica que mientras más estudios tienen las mujeres, más aplazan el momento de tener su primer hijo. Con lo cual en un principio esta variable debería ser útil para predecir la variable de interés.
 
 ```{r edu_att}
 #| label: fig-edu_att
-#| fig-cap: "Grafico Líneas, distribución de la edad al primer hijo por Años de Educación de la Madre."
+#| fig-cap: "Gráfico Líneas, distribución de la edad al primer hijo por Años de Educación de la Madre."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -164,7 +164,7 @@ Este patrón es repetido por todos los países, aunque su efecto es más marcado
 
 ```{r edu_att_xpais}
 #| label: fig-edu_att_xpais
-#| fig-cap: "Grafico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."
+#| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -174,11 +174,11 @@ datos_phijo %>% mutate(anio_edu_15=as.factor(ifelse(anio_educ>=15,1,0))) %>%
   geom_boxplot(color = "grey") + theme_minimal()+ scale_fill_viridis_d(name='Años de educación', labels = c('Menor a 15 años', 'Mayor o igual a 15 años')) + labs(x = 'País', y = 'Edad al Primer Hijo') + theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-Otro factor que posiblemente afecte es el nivel de riqueza y la zona del hogar de pertenencia de la mujer, en la @fig-riqueza, se observa que existe un efecto de atrasamiento en la edad al primer hijo a medida que el índice de riqueza aumenta. Aunque el efecto no es tan marcado y presenta mayor dispersión para mujeres con mayores niveles de la variable. Donde el efecto parece no estar influenciado por si la zona es urbana o rural siendo muy similar en distribución. Es destacable que en este caso no se esta midiendo la riqueza al momento del tener el hijo con lo que el contexto de la mujer puede haber cambiado en el proceso aunque sigue pareciendo un indicador posiblemente relevante en la predicción. 
+Otro factor que posiblemente afecte es el nivel de riqueza y la zona del hogar de pertenencia de la mujer, en la @fig-riqueza, se observa que existe un efecto de atrasamiento en la edad al primer hijo a medida que el índice de riqueza aumenta, aunque el efecto no es tan marcado y presenta mayor dispersión para mujeres con mayores niveles de la variable, dónde el efecto parece no estar influenciado por si la zona es urbana o rural siendo muy similar en distribución. Es destacable que en este caso no se está midiendo la riqueza al momento de tener el hijo, por lo que el contexto de la mujer puede haber cambiado en el proceso aunque sigue pareciendo un indicador posiblemente relevante en la predicción. 
 
 ```{r riqueza}
 #| label: fig-riqueza
-#| fig-cap: "Grafico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."
+#| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -191,11 +191,11 @@ ggplot(aes(y =edad_phijo, x=	ind_riqueza,weight = ponderador,fill=urbano)) +
   theme_minimal() + scale_fill_viridis_d(name="Zona", labels = c("Rural", "Urbano")) 
 ```
 
-Por otro lado variables como el comportamiento o la educación sexual de la mujer también pueden influir en la edad al primer hijo. En la @fig-comp_sexual se observa la distribución de la edad al primer hijo diferenciando por la cantidad de parejas sexuales que han tenido las mujeres y si la misma conoce algún método anticonceptivo tanto tradicional como moderno. En este caso, se observa que las mujeres que han tenido más parejas sexuales tienden a tener su primer hijo a una edad más temprana, aunque el efecto no es tan marcado. Por otro lado, las mujeres que conocen algún método anticonceptivo tanto tradicional como moderno presentan una edad al primer hijo mas avanzada algo esperable para cualquiera de las cantidad de pareja que hayan tenido.
+Por otro lado variables como el comportamiento o la educación sexual de la mujer también pueden influir en la edad al primer hijo. En la @fig-comp_sexual se observa la distribución de la edad al primer hijo diferenciando por la cantidad de parejas sexuales que han tenido las mujeres y si la misma conoce algún método anticonceptivo, tanto tradicional como moderno. En este caso, se observa que las mujeres que han tenido más parejas sexuales tienden a tener su primer hijo a una edad más temprana, aunque el efecto no es tan marcado. Por otro lado, las mujeres que conocen algún método anticonceptivo tanto tradicional como moderno presentan una edad al primer hijo más avanzada, algo esperable para cualquiera de las cantidades de parejas que hayan tenido.
 
 ```{r comp_sexual}
 #| label: fig-comp_sexual
-#| fig-cap: "Grafico Caja, distribución de la edad al primer hijo por Años de Educación de la Madre y por comienzo de relaciones sexuales."
+#| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por Años de Educación de la Madre y por comienzo de relaciones sexuales."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -206,20 +206,20 @@ ggplot(aes(y = edad_phijo, x= n_parejas,weight = ponderador,fill=con_antic)) +
   geom_boxplot(color = "grey") +
   labs(x = "Cantidad de parejas sexuales",
        y = "Edad al Primer Hijo") +
-  theme_minimal() + scale_fill_viridis_d(name="Conocimiento de Metodos", labels = c("No", "Tradicional", "Moderno"))
+  theme_minimal() + scale_fill_viridis_d(name="Conocimiento de Métodos", labels = c("No", "Tradicional", "Moderno"))
 ```
 
 # Modelado de la edad al primer hijo
 
-Una vez visualizado los datos y posibles relaciones en las variables se procede armar los modelos. 
+Una vez visualizados los datos y posibles relaciones en las variables se procede a armar los modelos. 
 
-Para incorporar información sobre el contexto social y económico se toman en cuenta estas 5 variables, que algunas de ellas se ha visualizo su efecto relevante:
+Para incorporar información sobre el contexto social y económico se toman en cuenta estas 5 variables, algunas de ellas hemos visualizado su efecto, siendo este relevante:
 
 - País de procedencia de la mujer.
 - Indice de riqueza del hogar.
 - Si el hogar dispone de televisión.
 - Si la mujer se encuentra en una área urbana o rural.
-- La mujer en la actualidad trabaja.
+- Si la mujer trabaja en la actualidad.
 
 Por lado del nivel educativo de la mujer se toman en cuenta las siguientes variables:
 
@@ -246,18 +246,18 @@ datos_test <- testing(datos_split)
 datos_recipe <- recipe(edad_phijo ~ pais  + tv + anio_educ + leer + ind_riqueza + con_antic + n_parejas + trabajo , data = datos_train)
 ```
 
-En este caso se trabaja integramente con 'tidymodels' framework que permite realizar la evaluación de los modelos de manera sencilla. Se opta por evaluar la eficiencia de modelos basados en arboles: Bagging, Random Forest y CatBoost, donde para cada uno se realiza su correspondiente tuneo de hiperparametros.
+En este caso se trabaja integramente con 'tidymodels' framework que permite realizar la evaluación de los modelos de manera sencilla. Se opta por evaluar la eficiencia de modelos basados en árboles: Bagging, Random Forest y CatBoost, donde para cada uno se realiza su correspondiente tuneo de hiperparámetros.
 
 ## Bagging
 
-### Busqueda de Hiperparametros 
+### Búsqueda de Hiperparámetros 
 
-Para evaluar la eficiencia de los modelos de bagging se realiza mediante la técnica de validación cruzada la búsqueda de hiperparametros óptimos. En este caso se utiliza 'k-folds cross validation' con 10 folds, donde se busca como hipérparametros el numero mínimo de observaciones por nodo *(min_n)* y la cantidad de arboles a utilizar *(trees)*. Como la cantidad de observaciones es muy grande se opta por armar una grilla con valores de 50 a 5000 para el numero mínimo de observaciones, para el numero de arboles que no es tan importante como el anterior se opta por valores de 10 a 1000 pero mas distanciados. Como engine en este caso se utiliza 'ranger'.
+Para evaluar la eficiencia de los modelos de bagging, se realiza mediante la técnica de validación cruzada la búsqueda de hiperparámetros óptimos. En este caso se utiliza 'k-folds cross validation' con 10 folds, donde se busca como hiperparámetros el número mínimo de observaciones por nodo *(min_n)* y la cantidad de árboles a utilizar *(trees)*. Como la cantidad de observaciones es muy grande se opta por armar una grilla con valores de 50 a 5000 para el número mínimo de observaciones, para el número de árboles que no es tan importante como el anterior se opta por valores de 10 a 1000 pero más distanciados. Como engine en este caso se utiliza 'ranger'.
 
 ```{r}
 tibble(min_n = c(50,100,150,200,250,300,350,400,450,500,
                                     1000,1500,2000,2500,5000),
-       trees = c(10,50,100,250,500,1000,"","","","","","","","","")) %>% t() %>% kable(caption = 'Grilla de hiperparametros para modelos de Bagging',  booktabs = TRUE) %>% 
+       trees = c(10,50,100,250,500,1000,"","","","","","","","","")) %>% t() %>% kable(caption = 'Grilla de hiperparámetros para modelos de Bagging',  booktabs = TRUE) %>% 
   kable_styling(latex_options = "striped", font_size = 8, position = "center")
 ```
 
@@ -314,11 +314,11 @@ bagging_fit <- bagging_workflow %>% update_model(
 bagging_train <- bagging_fit %>% augment(new_data = datos_train) %>% mutate(residuals = .pred - edad_phijo)
 ```
 
-Una de las primeras cosas que salen a la vista al evaluar la performance del modelo es que el mismo presenta un rango de predicción con los datos entrenados desde 17 a 30 años, no contemplando los casos no tan comunes de mujeres que tiene su primer hijo a edades mayores a 30 años, a su vez es extraño que el mismo no presente valores menores a 17 años siendo no tan fuera de lo usual observaciones en los datos con 16 o 15 años.
+Una de las primeras cosas que salen a la vista al evaluar la performance del modelo es que el mismo presenta un rango de predicción con los datos entrenados desde 17 a 30 años, no contemplando los casos no tan comunes de mujeres que tienen su primer hijo a edades mayores a 30 años, a su vez es extraño que el mismo no presente valores menores a 17 años siendo no tan fuera de lo usual observaciones en los datos con 16 o 15 años.
 
-Observando del análisis descriptivo puede ser que la causa sea que ninguna de las covariables consideradas permita captar y distinguir este tipo de casos de mujeres con hijos en altas edades. Tambien se probo la transformación de la variable tanto utilizando el logaritmo como la raíz cuadrada pero sin obtener resultados satisfactorios, obteniéndose un rango de edades similar predicho.
+Observando el análisis descriptivo puede ser que la causa sea que ninguna de las covariables consideradas permita captar y distinguir este tipo de casos de mujeres con hijos en altas edades. También se probó la transformación de la variable, tanto utilizando el logaritmo como la raíz cuadrada, pero sin obtener resultados satisfactorios, obteniéndose un rango de edades similar predicho.
 
-En la @fig-bagging_fit_density se puede visualizar la distribución de los valores predichos con los datos de entrenamiento donde se observa lo que se menciono donde el rango se encuentra acotado, la distribución presenta una moda en los 19 años algo bastante coeherente con lo observado en los datos.
+En la @fig-bagging_fit_density se puede visualizar la distribución de los valores predichos con los datos de entrenamiento donde se observa lo que se mencionó, el rango se encuentra acotado, la distribución presenta una moda en los 19 años, lo que es bastante coeherente con lo observado en los datos.
 
 ```{r bagging_fit_density}
 #| label: fig-bagging_fit_density
@@ -329,6 +329,8 @@ En la @fig-bagging_fit_density se puede visualizar la distribución de los valor
 
 bagging_train %>% ggplot(aes(x=.pred)) + geom_density(fill='darkviolet') + theme_minimal() + labs(x = 'Predicción', y = 'Densidad') + scale_x_continuous(breaks=seq(0,30,1))
 ```
+
+En la @fig-bagging_res se observa la relación entre las predicciones del modelo Bagging y los residuos de dichas predicciones, junto con una curva ajustada mediante el método de suavizado LOESS. En general, los residuos parecen estar distribuidos de manera homogénea a lo largo del rango de predicciones, sin una tendencia clara, aunque en su mayoría se presentan de forma aleatoria, se nota que el modelo aún muestra una dispersión considerable en alguna zona. Esto indica que, aunque el desempeño general sea bueno, hay casos específicos donde el modelo podría estar cometiendo errores más grandes en sus predicciones.
 
 ```{r bagging_res}
 #| label: fig-bagging_res
@@ -344,6 +346,10 @@ bagging_train  %>% ggplot(aes(x = .pred, y = residuals)) +
 ```
 
 ### Interpretación e importancia de las variables
+
+En esta sección se presentarán gráficos que ayudarán a la visualización de la importancia de las variables, tanto para ver a nivel general cuales son las que tienen mayor importancia en este modelo de Bagging, como además se buscará interpretar algunas de estas variables, mediante gráficos de dependencia parcial (PDP) para apreciar el tipo de relación entre la respuesta y la variable explicativa, buscando ver si es lineal, mónotona o más compleja.
+
+En la @fig-bagging_vip vemos un gráfico de barras que nos muestra a las variables explicativas ordenadas de mayor a menor importancia dentro del modelo de Bagging. Vemos entonces que la variable de mayor importancia en el modelo es la que indica los años de educación que alcanzó la mujer, seguida por el país de presedencia y el indice de riqueza de la mujer. Llama la atención, y cabe mencionar que en este caso la variable de menor importancia sería la que hace referencia a si la mujer trabaja o no hoy en día.
 
 ```{r bagging_vip}
 #| label: fig-bagging_vip
@@ -374,9 +380,11 @@ pdp_riqueza <- model_profile(explainer_bagging, N = 1000, variables = "ind_rique
 pdp_pais <- model_profile(explainer_bagging, N = 1000, variables = "pais")
 ```
 
+Ahora intentaremos describir la relación entre la respuesta y algunos de los predictores de manera individual, para un mejor entendimiento, mediante gráficos PDP que permiten ver el efecto marginal de las variables explicativas en el valor predicho del modelo. En la @fig-pdp_educ, observamos el efecto de los años de educación. Se puede ver que, para valores muy bajos de los años de educación, la edad media de las mujeres está entre los 19 y 20 años, hasta llegar a los 9 años de educación. A partir de ese punto, la edad media empieza a subir de manera muy marcada, alcanzando casi los 24 años para las mujeres con 16 años de educación. Luego vemos cómo sigue subiendo, pero es importante tener en cuenta la cantidad de observaciones. Puede estar ocurriendo que haya años de educación con pocas observaciones, lo que haría difícil afirmar que esto sigue subiendo de manera tan pronunciada. 
+
 ```{r pdp_educ}
 #| label: fig-pdp_educ
-#| fig-cap: " Gráfico PDP, efecto de los años de educación en la edad al primer hijo."
+#| fig-cap: "Gráfico PDP, efecto de los años de educación en la edad al primer hijo."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -384,9 +392,11 @@ pdp_pais <- model_profile(explainer_bagging, N = 1000, variables = "pais")
 plot(pdp_educ) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Años de Educación', y='Edad Media al Primer Hijo')
 ```
 
+En la @fig-pdp_riqueza vemos el efecto del índice de riqueza en la edad al primer hijo. En esta figura se nota de forma muy clara que hay pocas observaciones en valores extremos del índice de riqueza, por lo que las edades medias en estos extremos no son tan creíbles. Sin embargo, si nos centramos en valores del índice entre -1 y 2, que es donde se encuentran la mayor cantidad de observaciones, podemos decir que la edad media de las mujeres al tener el primer hijo oscila en torno a los 20 años hasta que se alcanza el 0 en el índice. A partir de ese valor, se da un incremento casi monótono en la edad media, con algunas excepciones en ciertos valores que provocan pequeñas caídas, pero llegando, en valores cercanos a 2 del índice, a edades medias de más de 21 años.
+
 ```{r pdp_riqueza}
 #| label: fig-pdp_riqueza
-#| fig-cap: " Gráfico PDP, efecto del indice de riqueza en la edad al primer hijo."
+#| fig-cap: "Gráfico PDP, efecto del indice de riqueza en la edad al primer hijo."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -394,9 +404,11 @@ plot(pdp_educ) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Añ
 plot(pdp_riqueza) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Indice de Riqueza', y='Edad Media al Primer Hijo') + xlim(-2,3.5)
 ```
 
+Por último presentamos el gráfico PDP para el país de nacimiento de las mujeres en la @fig-pdp_pais. En este vemos la edad media al primer hijo en forma de barra debido a que la variable país es categórica. Los países con mayor edad media son Albania y Haití con valores por encima de los 21 años, mientras que los países con valores más chicos son Angola y Dominicana con edad media de la mujer al tener el primer hijo por debajo de los 19 años.
+
 ```{r pdp_pais}
 #| label: fig-pdp_pais
-#| fig-cap: " Gráfico PDP, efecto del país en la edad al primer hijo."
+#| fig-cap: "Gráfico PDP, efecto del país en la edad al primer hijo."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -406,7 +418,9 @@ plot(pdp_pais) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Pa�
 
 ## Random Forest
 
-### Busqueda de Hiperparametros
+### Busqueda de Hiperparámetros
+
+Para evaluar la eficiencia de los modelos de Random Forest, se realiza mediante la técnica de validación cruzada la búsqueda de hiperparámetros óptimos, de la misma manera que se hizo en la sección de Bagging. Aquí se vuelve a utilizar 'k-folds cross validation' con 10 folds, donde se busca como hiperparámetros el *(min_n)* y *(trees)*, como antes, pero además se busca el número de predictores que se seleccionarán aleatoriamente en cada división *(mtry)*. En este caso la grilla se arma con los mismos valores para el número mínimo de observaciones y para el número de árboles, y para el número de predictores se usa una grilla que tome valores de 2 a 8 de 2 en 2. Como engine se vuelve a utilizar 'ranger'.
 
 ```{r}
 rf_spec <- rand_forest(mtry =tune(), min_n=tune(),  trees=tune()) %>%
@@ -461,6 +475,10 @@ rf_fit <- rf_workflow %>% update_model(
 rf_train <- rf_fit %>% augment(new_data = datos_train) %>% mutate(residuals = .pred - edad_phijo)
 ```
 
+Al igual que en Bagging lo primero que llama la atención al evaluar la performance del modelo es que el mismo presenta un rango de predicción con los datos entrenados desde 17 a 30 años, lo cual ya discutimos en la sección anterior.
+
+En la @fig-rf_fit_density se puede visualizar la distribución de los valores predichos con los datos de entrenamiento donde se observa lo que se mencionó, el rango se encuentra acotado, la distribución presenta una moda en los 19 años, al igual que sucedían en Bagging, la diferencia en este caso es que los datos están un poco mas dispersos cerca de esa moda.
+
 ```{r rf_fit_density}
 #| label: fig-rf_fit_density
 #| fig-cap: "Gráfico distribución, valores predichos por el modelo de rf con los datos de entrenamiento."
@@ -470,6 +488,8 @@ rf_train <- rf_fit %>% augment(new_data = datos_train) %>% mutate(residuals = .p
 
 rf_train %>% ggplot(aes(x=.pred)) + geom_density(fill='darkviolet') + theme_minimal() + labs(x = 'Predicción', y = 'Densidad') + scale_x_continuous(breaks=seq(0,30,1))
 ```
+
+En la @fig-rf_res observamos la misma relación entre las predicciones del modelo RF y los residuos de dichas predicciones, junto con la curva ajustada mediante LOESS, que observamos usando Bagging.
 
 ```{r rf_res}
 #| label: fig-rf_res
@@ -485,6 +505,10 @@ rf_train %>% ggplot(aes(x = .pred, y = residuals)) +
 ```
 
 ### Interpretación e importancia de las variables
+
+En esta sección se presentarán los mismos gráficos que ayudan a la visualización de la importancia de las variables y que sirven para apreciar el tipo de relación entre la respuesta y la variable explicativa usados anteriormente.
+
+En la @fig-rf_vip vemos un gráfico de barras que nos muestra a las variables explicativas ordenadas de mayor a menor importancia dentro del modelo de Random Forest. Vemos entonces que la variable de mayor importancia en el modelo sigue siendo la que indica los años de educación que alcanzó la mujer, y el orden sigue de la misma manera que en Bagging, pero ahora vemos algunas variables con mayor importancia que la que tenían en la otra sección, como por ejemplo el país y el indice de riqueza.
 
 ```{r rf_vip}
 #| label: fig-rf_vip
@@ -515,9 +539,11 @@ rf_pdp_riqueza <- model_profile(explainer_rf, N = 1000, variables = "ind_riqueza
 rf_pdp_pais <- model_profile(explainer_rf, N = 1000, variables = "pais")
 ```
 
+Ahora intentaremos describir la relación entre la respuesta y algunos de los predictores de manera individual, para un mejor entendimiento, mediante gráficos PDP. En la @fig-rf_pdp_educ, observamos el efecto de los años de educación. Se pueden ver resultados muy similares a los de la sección pasada, pero debido al problema ya mencionado de tener pocas observaciones para algunos años de educación, vemos como de los 18 a los 25 años de educación no se mueve casi la edad media de las mujeres al tener su primer hijo, parece estabilizarse en los 24 años. 
+
 ```{r rf_pdp_educ}
 #| label: fig-rf_pdp_educ
-#| fig-cap: " Gráfico PDP, efecto de los años de educación en la edad al primer hijo."
+#| fig-cap: "Gráfico PDP, efecto de los años de educación en la edad al primer hijo."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -525,9 +551,11 @@ rf_pdp_pais <- model_profile(explainer_rf, N = 1000, variables = "pais")
 plot(rf_pdp_educ) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Años de Educación', y='Edad Media al Primer Hijo')
 ```
 
+En la @fig-rf_pdp_riqueza vemos el efecto del índice de riqueza en la edad al primer hijo. En esta figura se nota de forma muy clara que hay pocas observaciones en valores extremos del índice de riqueza, al igual que antes, por lo que las edades medias en estos extremos no son tan creíbles. En los valores entre -1 y 2 se aprecian resultados muy similares a los observados en Bagging, primero oscila un poco en valores cercanos a los 20 años y a partir del 0 empieza a subir la edad media de las mujeres hasta pasar los 21 años para un valor de 2 del indice de riqueza.
+
 ```{r rf_pdp_riqueza}
 #| label: fig-rf_pdp_riqueza
-#| fig-cap: " Gráfico PDP, efecto del indice de riqueza en la edad al primer hijo."
+#| fig-cap: "Gráfico PDP, efecto del indice de riqueza en la edad al primer hijo."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -535,9 +563,11 @@ plot(rf_pdp_educ) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='
 plot(rf_pdp_riqueza) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Indice de Riqueza', y='Edad Media al Primer Hijo') + xlim(-2,3.5)
 ```
 
+Por último presentamos el gráfico PDP para el país de nacimiento de las mujeres en la @fig-rf_pdp_pais. La única diferencia que vale la pena destacar en comparación con la @fig-pdp_pais es que en Haití la edad media de las mujeres al tener el primer hijo es un poco más baja y en Dominicana sucede lo contrario, ahora sube un poco la edad media.
+
 ```{r rf_pdp_pais}
 #| label: fig-rf_pdp_pais
-#| fig-cap: " Gráfico PDP, efecto del país en la edad al primer hijo."
+#| fig-cap: "Gráfico PDP, efecto del país en la edad al primer hijo."
 #| fig-align: center
 #| fig-height: 5
 #| fig-width: 8
@@ -580,7 +610,7 @@ glm_class_test %>% conf_mat(truth = psexo_18, estimate = .pred_class) %>% summar
 
 ## Random Forest 
 
-### Busqueda de Hiperparametros
+### Busqueda de Hiperparámetros
 
 ```{r}
 rf_spec_class <- rand_forest(mtry =tune(), min_n=tune(),  trees=tune()) %>% 
