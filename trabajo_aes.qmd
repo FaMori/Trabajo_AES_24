@@ -9,6 +9,9 @@ knitr::opts_chunk$set(echo = F, message = F, warning = F)
 library(dplyr)
 library(ggplot2)
 library(ggpubr)
+library(survey)
+library(srvyr)
+library(ggstats)
 library(kableExtra)
 library(tidymodels)
 library(vip)
@@ -16,7 +19,7 @@ library(DALEX)
 library(DALEXtra)
 ```
 
-\vspace{-2em}
+\vspace{-6em}
 
 # Introducción 
 
@@ -48,15 +51,70 @@ En este caso, se dispone de un total de aproximadamente 150,000 observaciones co
 
 ```{r}
 datos_dhs <- read.csv('datos/dhs_6_7.csv') %>%
-mutate(v000 = as.factor(case_when(v000 == 'AL7' ~ 'Albania',
-v000 == 'AM7' ~ 'Armenia',v000 == 'AO7' ~ 'Angola',
-v000 == 'ET7' ~ 'Etiopia',v000 == 'GH6' ~ 'Ghana',
-v000 == 'GU6' ~ 'Guatemala', v000 == 'HT7' ~ 'Haiti',
-v000 == 'PE6' ~ 'Perú', v000 == 'DR6' ~ 'República Dominicana', v000 == 'ZA7' ~ 'Sudáfrica')),v005=as.numeric(v005)/1e6, v007=as.numeric(v007),v012=as.numeric(v012),v102=as.factor(v102),v119 = as.factor(case_when(v119 %in% c(7,9) ~ NA, T~v119)),v121 = as.factor(case_when(v121 %in% c(7,9) ~ NA, T~v121)),v133=as.numeric(case_when(v133 %in% 97:99~ NA,T~v133)),v136=as.numeric(v136),v157=as.factor(case_when(v157 == 9 ~ NA,v157 %in% c(1,2) ~ 1,v157 == 3 ~ 2, T~v157)),v191=as.numeric(v191)/1e5,v212=as.numeric(v212),v301=as.factor(v301),v525=as.numeric(case_when(v525 %in% 96:99 ~ NA, T~v525)),v714=as.factor(case_when(v714 == 9 ~NA,T~v714)),v836=as.numeric(case_when(v836 %in% 96:99 ~ NA, T~v836)))
+mutate(v000 = as.factor(case_when(
+  v000 == 'AL7' ~ 'Albania',
+  v000 == 'AM7' ~ 'Armenia',
+  v000 == 'ET7' ~ 'Etiopia',
+  v000 == 'GU6' ~ 'Guatemala',
+  v000 == 'PE6' ~ 'Perú', 
+  v000 == 'DR6' ~ 'República Dominicana', 
+  v000 == 'ZA7' ~ 'Sudáfrica')), # País
+  # Ponderador
+  v005 = as.numeric(v005)/1e6, 
+  # Año
+  v007 = as.numeric(v007), 
+  # Edad
+  v012 = as.numeric(v012), 
+  # PSU 
+  v021 = as.factor(v021),
+  # Estrato
+  v022 = as.factor(paste0(SurveyId,'_',v022)),
+  # Área Urbana/Rural
+  v025 = as.factor(ifelse(v025==1,'Urbano','Rural')), 
+  # Hogar Electricidad
+  v119 = as.factor(case_when(v119==1~'Si', v119==0~'No')),
+  # Hogar Televisión
+  v121 = as.factor(case_when(v121==1~'Si', v121==0~'No')),
+  # Años de Educación
+  v133 = as.numeric(case_when(v133 %in% 97:99~NA, T~v133)),
+  # Número de personas en el hogar
+  v136 = as.numeric(v136),
+  # Frecuencia de lectura
+  v157 = as.factor(case_when(v157==0~'Nunca',v157%in%c(1,2)~ 'Frecuente',v157==3~'Todos los dias')),
+  # Frecuencia de escuchar radio
+  v158 = as.factor(case_when(v158==0~'Nunca',v158%in%c(1,2)~ 'Frecuente',v158==3~'Todos los dias')),
+  # Frecuencia de ver noticias
+  v159 = as.factor(case_when(v159==0~'Nunca',v159%in%c(1,2)~ 'Frecuente',v159==3~'Todos los dias')),
+  # Categoría Riqueza
+  v190 = as.factor(case_when(v190==1~'Más Pobre', v190==2~'Pobre', v190==3~'Medio', v190==4~'Rico', v190==5~'Más Rico')),
+  # Indice de riqueza
+  v191 = as.numeric(v191)/1e5,
+  # Edad al primer hijo
+  v212 = as.numeric(v212),
+  # Conocimiento de métodos anticonceptivos
+  v301 = as.factor(case_when(v301==0~'Ninguno', v301==1~'Folklórico', v301==2~'Tradicional', v301==3~'Moderno')),
+  # Intención de uso de métodos anticonceptivos
+  v364 = as.factor(case_when(v364%in%1:2~'Usando Metodo',
+  v364%in%3:4~'No Usando Metodo',v364==5~'Nunca Tiene Relaciones')),
+  # Cantidad de uniones
+  v503 = as.factor(case_when(v501%in%c(0,2)~'No casada',v503==1~'Una', v503==2~'Más de Una')),
+  # Edad al primer acto sexual
+  v531 = as.numeric(case_when(v531 %in% 96:99 ~ NA, T~v531)),
+  # Relaciones sexuales recientes
+  v536 = as.factor(case_when(v536==0~'Nunca',v536==1~'Activa',
+                             v536%in%2:3~'Inactiva')),
+  # Numero ideal de hijos
+  v613 = as.numeric(case_when(v613 %in% 96:99 ~ NA, T~v613)),
+  # Años de educación de la pareja
+  v715 = as.numeric(case_when(v715%in%97:99~NA, T~v715)),
+  # Ocupación de la mujer
+  v717 = as.factor(case_when(v717==0~'No Trabaja', v714==0~'No Trabaja', v717==1~'Profesional/Tecnico',v717%in%4:5~'Agricultura',v717%in%c(3,7)~'Servicios/Ventas',v717==6~'Domestico',v717%in%8:9~'Manual')),
+  # Numero de parejas sexuales
+  v836 = as.numeric(case_when(v836 %in% 96:99 ~ NA, T~v836))) %>% select(-SurveyId,-v501,-v714)
 
 cod_variables <- names(datos_dhs)
 
-name_variables <-c('pais','ponderador','anio','edad','urbano','electricidad','tv','anio_educ','tot_fam','leer','ind_riqueza','edad_phijo','con_antic','edad_psexo','trabajo','n_parejas')
+name_variables <-c('id','pais','ponderador','anio','edad','psu','estrato','zona','hogar_elect','hogar_tv','anio_educ','n_fam_hogar','leer','radio','noticias','cat_riqueza','indice_riqueza','edad_phijo','con_antic','uso_antic','cant_uniones','edad_psexo','rec_sexo','nideal_hijos','anio_educ_par','ocupacion','n_parejas')
 
 desc_variables <- c(
   'País donde se realizó la encuesta',
@@ -69,11 +127,16 @@ desc_variables <- c(
   'Total años de educación de la mujer, se calcula a partir del nivel máximo de educación alcanzado, es un valor comparable entre países.',
   'Total de personas que viven en el hogar',
   'Frecuencia con que la mujer lee un periódico, revista o libro',
+  'Frecuencia con que la mujer escucha la radio',
+  'Frecuencia con que la mujer ve noticias',
+  'Indicador de riqueza del hogar',
   'Indicador de riqueza del hogar estandarizado, se calcula a partir de distintas medidas como materiales de construcción de la casa y servicios disponibles, su calculo puede variar entre paises.',
   'Edad de la mujer al primer hijo',
   'Conocimiento de algún método anticonceptivo, donde se distingue entre modernos (ej: Condon, pastillas, parches, etc.), tradicionales (ej: Coito interrumpido, calendario, etc.) y folklóricos (ej: Amuletos, rituales, etc.)',
+  'Mujer alguna vez casada',
   'Edad de la mujer al primer acto sexual',
   'Indica si la mujer actualmente trabaja',
+  'Total años de educación de la pareja de la mujer',
   'Cantidad de parejas sexuales que ha tenido la mujer'
 )
 
@@ -88,15 +151,21 @@ tipo_variables <- c(
   'Numérica Entera',
   'Numérica Entera',
   'Categórica',
+  'Categórica',
+  'Categórica',
+  'Categórica',
+  'Categórica',
   'Numérica',
   'Numérica Entera',
   'Categórica',
+  'Categórica',
   'Numérica Entera',
   'Categórica',
+  'Numérica Entera',
   'Numérica Entera'
 )
 
-rec_variables <- c('10 paises',' ',paste0(min(datos_dhs$v007),'-',max(datos_dhs$v007)),paste0(min(datos_dhs$v012),'-',max(datos_dhs$v012)),'1:Urbano, 2:Rural','0:No, 1:Si','0:No, 1:Si',paste0(min(datos_dhs$v133,na.rm = T),'-',max(datos_dhs$v133,na.rm = T)),paste0(min(datos_dhs$v136),'-',max(datos_dhs$v136)),'0:Nada, 1:Ocasional, 2:Todos los días',paste0(min(datos_dhs$v191,na.rm = T),'-',max(datos_dhs$v191,na.rm = T)),paste0(min(datos_dhs$v212,na.rm = T),'-',max(datos_dhs$v212,na.rm = T)),'0: Ninguno, 1:Folklórico, 2:Tradicional, 3:Moderno',paste0(min(datos_dhs$v525,na.rm = T),'-',max(datos_dhs$v525,na.rm = T)),'0: No, 1: Si',paste0(min(datos_dhs$v836,na.rm = T),'-',max(datos_dhs$v836,na.rm = T)))
+rec_variables <- c('10 paises',' ',paste0(min(datos_dhs$v007),'-',max(datos_dhs$v007)),paste0(min(datos_dhs$v012),'-',max(datos_dhs$v012)),'1:Urbano, 2:Rural','0:No, 1:Si','0:No, 1:Si',paste0(min(datos_dhs$v133,na.rm = T),'-',max(datos_dhs$v133,na.rm = T)),paste0(min(datos_dhs$v136),'-',max(datos_dhs$v136)),'0:Nada, 1:Ocasional, 2:Todos los días','0:Nada, 1:Ocasional, 2:Todos los días','0:Nada, 1:Ocasional, 2:Todos los días','1:Más Pobre, 2:Pobre, 3:Medio, 4:Rico, 5:Más Rico', paste0(min(datos_dhs$v191,na.rm = T),'-',max(datos_dhs$v191,na.rm = T)),paste0(min(datos_dhs$v212,na.rm = T),'-',max(datos_dhs$v212,na.rm = T)),'0: Ninguno, 1:Folklórico, 2:Tradicional, 3:Moderno','0: Nunca, 1:Alguna vez Casada',paste0(min(datos_dhs$v525,na.rm = T),'-',max(datos_dhs$v525,na.rm = T)),'0: No, 1: Si',paste0(min(datos_dhs$v836,na.rm = T),'-',max(datos_dhs$v836,na.rm = T)))
                    
                    
 tabla_variables <- data.frame(cod_variables, name_variables,desc_variables,tipo_variables,rec_variables) 
@@ -117,9 +186,15 @@ En cuanto a las variables de interés, como la edad de la mujer al primer hijo, 
 Respecto a la otra variable de interés, la edad a la primera relación sexual, se decide filtrar a las mujeres que reportaron valores menores a 10 años, con el fin de evitar casos extremadamente atípicos o errores en el registro de datos.
 
 ```{r}
-datos_phijo <- datos_dhs %>% filter(edad_phijo >= 11) %>% filter(!is.na(edad_phijo),!is.na(tv),!is.na(leer),!is.na(n_parejas),!is.na(trabajo))
+datos_phijo <- datos_dhs %>% filter(edad_phijo >= 11) %>% na.omit()
+```
 
-datos_psexo <- datos_dhs %>% na.omit() %>% filter(edad_psexo >= 10) %>% mutate(psexo_18 = as.factor(case_when(edad_psexo < 18 ~ 0, T~1)))
+```{r}
+dis_muestra <- datos_phijo %>%
+              as_survey_design(ids=psu,strata=estrato, weights=ponderador, nest=TRUE)
+
+pop_fem <- read.csv('datos/population.csv') 
+datos_pop <- datos_dhs %>% merge(pop_fem%>%select(-anio),by=c('pais'),how='left') %>% group_by(pais) %>% mutate(pop_rep= (ponderador/sum(ponderador)) *pop_fem)
 ```
 
 ## Edad al primer hijo
@@ -135,13 +210,14 @@ En la @fig-phijo_xpais se puede observar como, dependiendo de que país sea la m
 #| fig-height: 5
 #| fig-width: 8
 
-datos_phijo %>% 
-mutate(pais = forcats::fct_reorder(pais, edad_phijo, .fun = mean))%>%
-  ggplot(aes(x=edad_phijo,y=pais,fill=pais,weight=ponderador)) + geom_violin() +
-  stat_summary(fun = "mean",
-               geom = "point",
-               size=4,
-               color = "lightgrey") + theme_minimal() + labs(x = 'Edad al primer hijo', y = 'País') + theme(legend.position = 'none') + scale_fill_viridis_d()
+mean_ephijo <- dis_muestra %>% 
+              group_by(pais) %>%
+              summarise(edad_phijo = survey_mean(edad_phijo)) %>%
+              mutate(pais=forcats::fct_reorder(pais, edad_phijo))
+  
+dis_muestra %>% mutate(pais = factor(pais,levels=levels(mean_ephijo$pais))) %>%
+ggsurvey(aes(x = edad_phijo, y = pais, fill=pais))  + geom_violin()  +
+  theme_minimal() + labs(x = 'Edad al primer hijo', y = 'País') + theme(legend.position = 'none') + scale_fill_viridis_d()
 ```
 
 Uno de los factores más importantes en el proceso del desplazamiento de la fecundidad a edades más avanzadas es el logro educativo de las mujeres. Esto es algo que en los datos utilizados en este trabajo debería poder ser captado. En la @fig-edu_att se observa la distribución de la edad al primer hijo donde cada línea corresponde a la cantidad de años de educación que tuvo la madre. En este caso, se puede observar claramente un corrimiento hacia la derecha de las modas de la distribución a medida que la mujer tiene más años de educación. Esto indica que mientras más estudios tienen las mujeres, más aplazan el momento de tener su primer hijo. Con lo cual en un principio esta variable debería ser útil para predecir la variable de interés.
@@ -153,11 +229,11 @@ Uno de los factores más importantes en el proceso del desplazamiento de la fecu
 #| fig-height: 5
 #| fig-width: 8
 
-datos_phijo %>% filter(anio_educ < 22) %>%
-ggplot(aes(x = edad_phijo, color = anio_educ, group=anio_educ, weight = ponderador)) + geom_density(linewidth=0.8) +
+dis_muestra %>% filter(anio_educ<22) %>%
+  ggsurvey(aes(x = edad_phijo, color = anio_educ, group=anio_educ)) + geom_density(linewidth=0.8) +
   labs(x = "Edad al Primer Hijo",
        y = "Frecuencia") +
-  theme_minimal() + scale_color_viridis_c(name = "Años de Educación")
+  theme_minimal() + scale_color_viridis_c(name = "Años de Educación",limits = c(0, 22),oob = scales::squish)
 ```
 
 Este patrón es repetido por todos los países, aunque su efecto es más marcado en algunos paises, se observa la @fig-edu_att_xpais donde se tiene la distribución de la edad al primer hijo por país y si la madre presenta mas de 15 años de educación. En todos los países, las mujeres con más años de educación tienden a tener su primer hijo a una edad más avanzada, aunque en países como Albania, este efecto parece bastante menos notorio.
@@ -169,8 +245,8 @@ Este patrón es repetido por todos los países, aunque su efecto es más marcado
 #| fig-height: 5
 #| fig-width: 8
 
-datos_phijo %>% mutate(anio_edu_15=as.factor(ifelse(anio_educ>=15,1,0))) %>%
-  ggplot(aes(x = pais, y=	edad_phijo, fill=anio_edu_15, weight = ponderador)) +
+dis_muestra %>% mutate(anio_edu_15=as.factor(ifelse(anio_educ>=15,1,0))) %>%
+ ggsurvey(aes(x = pais, y=	edad_phijo, fill=anio_edu_15)) + 
   geom_boxplot(color = "grey") + theme_minimal()+ scale_fill_viridis_d(name='Años de educación', labels = c('Menor a 15 años', 'Mayor o igual a 15 años')) + labs(x = 'País', y = 'Edad al Primer Hijo') + theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
@@ -183,9 +259,9 @@ Otro factor que posiblemente afecte es el nivel de riqueza y la zona del hogar d
 #| fig-height: 5
 #| fig-width: 8
 
-datos_phijo %>% mutate(ind_riqueza=as.factor(cut(ind_riqueza,breaks = quantile(datos_phijo$ind_riqueza, probs = seq(0, 1, 0.2)),include.lowest =T))) %>%
-ggplot(aes(y =edad_phijo, x=	ind_riqueza,weight = ponderador,fill=urbano)) +
-  geom_boxplot(color = "grey") +
+dis_muestra %>% mutate(indice_riqueza=as.factor(cut(indice_riqueza,breaks = quantile(datos_phijo$indice_riqueza, probs = seq(0, 1, 0.2)),include.lowest =T))) %>%
+ ggsurvey(aes(y =edad_phijo, x=	indice_riqueza,fill=zona)) +
+  geom_boxplot(color = "grey")  + 
   labs(x = "Quintiles Indice de Riqueza",
        y = "Edad al Primer Hijo") +
   theme_minimal() + scale_fill_viridis_d(name="Zona", labels = c("Rural", "Urbano")) 
@@ -200,13 +276,12 @@ Por otro lado variables como el comportamiento o la educación sexual de la muje
 #| fig-height: 5
 #| fig-width: 8
 
-datos_phijo %>% mutate(n_parejas=as.factor(case_when(n_parejas == 1 ~ '1', n_parejas == 2 ~ '2', n_parejas == 3 ~ '3', 
-n_parejas >= 4 ~ '4 o más')),con_antic=as.factor(ifelse(con_antic %in% c(0,1), 0, con_antic))) %>%
-ggplot(aes(y = edad_phijo, x= n_parejas,weight = ponderador,fill=con_antic)) +
-  geom_boxplot(color = "grey") +
+dis_muestra %>% mutate(n_parejas=as.factor(case_when(n_parejas == 1 ~ '1', n_parejas == 2 ~ '2', n_parejas == 3 ~ '3', 
+n_parejas >= 4 ~ '4 o más'))) %>%
+ ggsurvey(aes(y = edad_phijo, x= n_parejas,fill=con_antic))  +  geom_boxplot(color = "grey") +
   labs(x = "Cantidad de parejas sexuales",
        y = "Edad al Primer Hijo") +
-  theme_minimal() + scale_fill_viridis_d(name="Conocimiento de Métodos", labels = c("No", "Tradicional", "Moderno"))
+  theme_minimal() + scale_fill_viridis_d(name="Conocimiento de Métodos")
 ```
 
 # Modelado de la edad al primer hijo
