@@ -212,11 +212,13 @@ kable(tabla_variables, caption = 'Descripción de las variables disponibles en e
 
 Antes de realizar el análisis exploratorio, se procede a limpiar los datos. Tomándose la precaución en cada variable de considerar las codificaciones de no respuesta y dato faltante, como el valor 99, que puede afectar la interpretación sobre todo en variables numéricas.
 
-[HABLAR UN POCO DEL DISEÑO MUESTRAL Y QUE SE CONTEMPLA EN EL ANALISIS EXPLORATORIO Y SE OPTO POR NO CONSIDERARLO EN LOS MODELOS]
+Se debe tener en cuenta que los datos provienen de una muestra compleja, debido a que éstas encuestas utilizan un diseño muestral estratificado y por conglomerados, lo que implica que las observaciones no son independientes. Por lo tanto se requiere del uso de pesos muestrales para hacer inferencias correctas, pero para el propósito de este trabajo, se optó por no incorporar explícitamente el diseño muestral en los modelos aunque si se ha tenido en cuenta la importancia de los pesos muestrales en el análisis exploratorio, lo cual permite una mejor comprensión de la estructura y distribución de los datos. Para esto último se utilizó la librería 'srvyr', la cuál nos permite trabajar de una manera correcta con la encuesta, nos deja incorporar el diseño muestral utilizado a nuestros datos, pasando como argumentos la unidad primaria de muestreo, el estrato del que se obtuvo la observación y el peso de la mujer en la encuesta.
+
+[HABLAR UN POCO DEL DISEÑO MUESTRAL Y QUE SE CONTEMPLA EN EL ANALISIS EXPLORATORIO Y SE OPTO POR NO CONSIDERARLO EN LOS MODELOS] LISTO!
 
 ## Edad al primer hijo
 
-[HAY QUE ACTUALIZAR EL TEXTO Y LOS GRAFICOS A LOS ULTIMOS DATOS UTILIZADOS, HACER GRAFICOS SOLO DE LAS VARIABLES QUE SE VEAN MAS IMPORTANTES EN EL RF]
+[HAY QUE ACTUALIZAR EL TEXTO Y LOS GRAFICOS A LOS ULTIMOS DATOS UTILIZADOS, HACER GRAFICOS SOLO DE LAS VARIABLES QUE SE VEAN MAS IMPORTANTES EN EL RF] LISTO!
 
 ```{r muestra_phijo}
 muestra_phijo <- datos_dhs %>% filter(edad_phijo >= 11) %>% na.omit() %>%
@@ -225,7 +227,7 @@ muestra_phijo <- datos_dhs %>% filter(edad_phijo >= 11) %>% na.omit() %>%
 
 La edad en que las mujeres comienzan a tener hijos está influenciada por una serie de factores en los que se encuentran comportamientos sociales como también por aspectos económicos y culturales. En la bibliografía suelen mencionarse algunos factores que están fuertemente vinculados a los procesos de fecundidad, como la mayor participación en el mercado laboral, el acceso a la educación de las mujeres, la planificación familiar y el uso de métodos anticonceptivos.
 
-En la @fig-phijo_xpais se puede observar como, dependiendo de que país sea la mujer encuestada, varía la edad que tenían al momento en que nació su primer hijo, algo esperable viniendo de paises con contextos muy distintos. En países como Angola, Etiopía, Guatemala o Dominicana, hay una gran parte de las mujeres encuestadas que tiene su primer hijo con veinte años o menos, mientras que en países del Este de Europa algo más desarrollados como Armenia o Albania, la edad al primer hijo tiende a ser mayor con una media por encima de los 20 años, patrón que usualmente se observa mientras más desarrollo más se atrasan todos los procesos relacionados con la fecundidad. Más allá de las diferencias, existe una gran concentración de mujeres que tienen su primer hijo entre los 18 y 23 años en todos los países.
+En la @fig-phijo_xpais se puede observar como, dependiendo de que país sea la mujer encuestada, varía la edad que tenían al momento en que nació su primer hijo, algo esperable viniendo de paises con contextos muy distintos. En países como Etiopía, Guatemala o Dominicana, hay una gran parte de las mujeres encuestadas que tiene su primer hijo con veinte años o menos, mientras que en países del Este de Europa algo más desarrollados como Armenia o Albania, la edad al primer hijo tiende a ser mayor con una media por encima de los 20 años, patrón que usualmente se observa mientras más desarrollo más se atrasan todos los procesos relacionados con la fecundidad. Más allá de las diferencias, existe una gran concentración de mujeres que tienen su primer hijo entre los 18 y 23 años en todos los países.
 
 ```{r phijo_xpais}
 #| label: fig-phijo_xpais
@@ -265,7 +267,7 @@ muestra_phijo %>% filter(anio_educ<22) %>%
   theme_minimal() + scale_color_viridis_c(name = "Años de Educación")
 ```
 
-Este patrón es repetido por todos los países, aunque su efecto es más marcado en algunos paises, se observa la @fig-edu_att_xpais donde se tiene la distribución de la edad al primer hijo por país y si la madre presenta mas de 15 años de educación. En todos los países, las mujeres con más años de educación tienden a tener su primer hijo a una edad más avanzada, aunque en países como Albania, este efecto parece bastante menos notorio.
+Este patrón es repetido por todos los países, aunque su efecto es más marcado en algunos paises, se observa la @fig-edu_att_xpais donde se tiene la distribución de la edad al primer hijo por país y si la madre presenta mas de 15 años de educación, este número surge del término de la educación secundaria, aunque puede variar según el país, 15 años de estudio es en general el momento en que se termina el nivel secundario. En todos los países, las mujeres con más años de educación tienden a tener su primer hijo a una edad más avanzada, aunque en países como Albania, este efecto parece bastante menos notorio.
 
 ```{r edu_att_xpais}
 #| label: fig-edu_att_xpais
@@ -279,7 +281,9 @@ muestra_phijo %>% mutate(anio_edu_15=as.factor(ifelse(anio_educ>=15,1,0))) %>%
   geom_boxplot(color = "grey") + theme_minimal()+ scale_fill_viridis_d(name='Años de educación', labels = c('Menor a 15 años', 'Mayor o igual a 15 años')) + labs(x = 'País', y = 'Edad al Primer Hijo') + theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-[MUESTRA QUE LA RIQUEZA DEL HOGAR ES UNA VARIABLE IMPORTANTE COMO SE ATRASA A MEDIDA QUE EL HOGAR ES MAS RICO SOBRE TODO PARA ALGUNOS PAISES]
+En la @fig-riqueza_xpais podemos observar la distrbución de la edad al primer hijo para los ditintos niveles de riqueza de los hogares, para algunos países, en general en todos los países observamos como se atrasa la edad a medida que el hogar es más rico, sobre todo en Albania, Perú y Sudáfrica. En otros como Dominicana o Armenia vemos que los niveles de riqueza están más concentrados en algún valor, salvo por el nivel más rico que ahí si se muestra un desplazamiento, no muy grande, pero un desplazamiento en fin, hacia edades un poco mayores. Por lo tanto se podría decir que en este caso la riqueza del hogar es una variable importante en este estudio.
+
+[MUESTRA QUE LA RIQUEZA DEL HOGAR ES UNA VARIABLE IMPORTANTE COMO SE ATRASA A MEDIDA QUE EL HOGAR ES MAS RICO SOBRE TODO PARA ALGUNOS PAISES] LISTO!
 
 ```{r riqueza_xpais}
 #| label: fig-riqueza_xpais
@@ -295,7 +299,9 @@ muestra_phijo %>% filter(pais%in%c('Armenia','Albania','Guatemala','Perú','Sud�
   theme_minimal() + scale_color_viridis_d(name = "Riqueza del Hogar") + theme(legend.position='top')
 ```
 
-[HABLAR QUE LAS MUJERES CON MAS UNIONES TIENDEN A TENER HIJOS MAS JOVENES Y QUE MAS PAREJAS SEXUALES INDICA UNA LEVE TENDENCIA A TENER HIJOS MAS JOVENES PARA MUJERES SIN CASAR O CON MAS DE UNA UNION, MENCIONAR QUE LAS MUJERES CON UNA SOLA UNION TIENDEN A ESTAR CONCENTRADAS EN 20 AÑOS ]
+Otro aspecto interesante en este tipo de estudio que se suele ver, es la cantidades de uniones y parejas sexuales que tienen las mujeres, por lo que se presenta la @fig-comp_parejas, donde observamos la ditrbución de la edad al primer hijo según estas variables. Vemos que las mujeres con más uniones tienden a tener hijos más jóvenes cuando tienen más de una pareja sexual, y además observamos esta tendencia en las mujeres con más parejas sexuales que no están casadas. También podemos observar que en las mujeres con una sola unión la edad al primer hijo se encuentra concentrada en los 20 años. 
+
+[HABLAR QUE LAS MUJERES CON MAS UNIONES TIENDEN A TENER HIJOS MAS JOVENES Y QUE MAS PAREJAS SEXUALES INDICA UNA LEVE TENDENCIA A TENER HIJOS MAS JOVENES PARA MUJERES SIN CASAR O CON MAS DE UNA UNION, MENCIONAR QUE LAS MUJERES CON UNA SOLA UNION TIENDEN A ESTAR CONCENTRADAS EN 20 AÑOS ] LISTO!
 ```{r comp_parejas}
 #| label: fig-comp_parejas
 #| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por cantidad de uniones y cantidad de parejas sexuales."
@@ -311,13 +317,34 @@ n_parejas >= 4 ~ '4 o más'))) %>%
   theme_minimal() + scale_fill_viridis_d(name="Cantidad de uniones")
 ```
 
+Otro aspecto que podría afectar en la edad al primer hijo podría estar relacionado con el acceso a distintos objetos materiales, como por ejemplo la televisión. En la @fig-hogar_tv vemos esta distrbución de la edad de las mujeres al primer hijo para esta variable por país, la cual nos muestra que en todos estos países la edad media al primer hijo se encuentra un poco por encima cuando los hogares tienen al menos una televisión. Ésta diferencia es muy marcada en países como Etipía y Albania, pero no está tan clara en países como Armenia y Sudáfrica. Cabe destacar además, que para Armenia y Albania existen muy pocas observaciones en donde los hogares no tuvieran una televisión, mientras que en Etipía hay 3 veces más hogares que no disponen de una televisión que los que si.
+
+```{r hogar_tv}
+#| label: fig-hogar_tv
+#| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por si el hogar dispone de una televisión o no por país."
+#| fig-align: center
+#| fig-height: 5
+#| fig-width: 8
+
+muestra_phijo %>% 
+ ggsurvey(aes(y = edad_phijo, x= pais, fill = hogar_tv))  + 
+  geom_boxplot(color = "grey") + 
+  theme_minimal() + 
+  scale_fill_viridis_d(name='Dispone de una televisón en el hogar',
+                       labels = c('No', 'Si')) + 
+  labs(x = 'País', y = 'Edad al Primer Hijo') + 
+  theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
 ### Selección de covariables relevantes
 
-[HABLAR DE QUE SE REALIZA UN RF PARA DETERMINAR IMPORTANCIA DE VARIABLES, SELECCIONANDO LAS MAS RELEVANTES]
+En este paso del estudio, lo que se realizó fue un Random Forest para determinar la importancia de las variables, seleccionando las más relevantes. Lo primero que se hizo fue sacar algunas variables relacionadas al diseño muestral, además de las variables que indican la edad de las mujeres y la edad al momento de la primera relación sexual ya que no se considera que tenga sentido para la utilidad del modelo. Luego dividimos los datos en entrenamiento y testeo, teniendo en cuenta además los países mediante el argumento strata, obteniendo entonces 39,122 datos de entrenamiento y 6,907 datos para testeo.
 
-[CAPAZ MENCIONAR QUE LO DE QUE LA EDAD A LA PRIMERA RELACIÓN SEXUAL NO SE CONSIDERA YA QUE NO TIENE DEMASIADO SENTIDO PARA LA UTILIDAD DEL MODELO]
+[HABLAR DE QUE SE REALIZA UN RF PARA DETERMINAR IMPORTANCIA DE VARIABLES, SELECCIONANDO LAS MAS RELEVANTES] LISTO!
 
-[MENCIONAR LA CANTIDAD DE DATOS UTILIZADOS, LA CANTIDAD DE DATOS PARA ENTRENAR Y QUE SE DIVIDEN TENIENDO ENCUENTA LOS PAISES (STRATA=PAIS)]
+[CAPAZ MENCIONAR QUE LO DE QUE LA EDAD A LA PRIMERA RELACIÓN SEXUAL NO SE CONSIDERA YA QUE NO TIENE DEMASIADO SENTIDO PARA LA UTILIDAD DEL MODELO] LISTO!
+
+[MENCIONAR LA CANTIDAD DE DATOS UTILIZADOS, LA CANTIDAD DE DATOS PARA ENTRENAR Y QUE SE DIVIDEN TENIENDO ENCUENTA LOS PAISES (STRATA=PAIS)] LISTO!
 
 ```{r split_phijo}
 datos_phijo <- datos_dhs %>% select(-id,-psu,-estrato,-anio,-ponderador,-edad,-edad_psexo) %>%
@@ -328,7 +355,9 @@ train_phijo <- training(datos_phijo)
 test_phijo <- testing(datos_phijo)
 ```
 
-[MENCIONAR QUE SE TUNEA (MTRY Y MIN_N) EL RF PARA OBTENER LA IMPORTANCIA CON CV PERO SIN AFINAR MUCHO LA GRILLA Y QUE SE USAN 1000 ARBOLES]
+En la búsuqeda de un modelo eficiente con hiperparámetros óptimos, mediante la técnica de validación cruzada utilizando 'k-folds cross validation' con 10 folds, se busca el número mínimo de observaciones por nodo *(min_n)* y el número de predictores que se seleccionarán aleatoriamente en cada división *(mtry)*. Cabe mencionar además que la grilla no se afino demasiado y que se usan 1000 árboles.
+
+[MENCIONAR QUE SE TUNEA (MTRY Y MIN_N) EL RF PARA OBTENER LA IMPORTANCIA CON CV PERO SIN AFINAR MUCHO LA GRILLA Y QUE SE USAN 1000 ARBOLES] LISTO!
 
 ```{r tune vip_phijo, eval=F}
 vip_phijo_spec <- rand_forest(mtry=tune(), min_n=tune(),  trees=1000) %>%
@@ -360,7 +389,9 @@ load('datos/imp_phijo.RData')
 imp_phijo <- vip(vip_phijo_fit,num_features=19)
 ```
 
-[HABLAR UN POCO DE LAS VARIABLES QUE QUEDAN, MENCIONAR QUE SE TOMAN LAS MAS IMPORTANTES (POR EJEMPLO 10)]
+En la @fig-vip_phijo vemos en forma de barras la importancia de las variables en este modelo, ordenadas de mayor a menor importancia. Como mencionamos al comienzo del estudio, lo que se busca son las variables con mayor importancia para continuar con el estudio, por lo que elegimos las 10 variables más relevantes para seguir adelante. Por lo tanto de ahora en adelante se trabajará con las variables: anio_educ, pais, indice_riqueza, cant_uniones, anio_educ_par, hogar_tv, cat_riqueza, n_parejas, nideal_hijos y n_fam_hogar.
+
+[HABLAR UN POCO DE LAS VARIABLES QUE QUEDAN, MENCIONAR QUE SE TOMAN LAS MAS IMPORTANTES (POR EJEMPLO 10)] LISTO!
 
 ```{r vip_phijo}
 #| label: fig-vip_phijo
@@ -378,7 +409,9 @@ best_vars_phijo <- imp_phijo$data %>% slice_max(order_by = Importance, n=10) %>%
 
 ## Primera relación sexual
 
-[MENCIONAR QUE ES UNA VARIABLE MUY RELACIONADA A LA EDAD AL PRIEMR HIJO CON LO QUE LAS COVARIABLES MAS RELEVANTES EN GENERAL SON LAS MISMAS]
+Como mencionamos al comienzo, esta parte va a tratar sobre un problema de clasificación en el que se buscará clasificar si una mujer comienza su vida sexual antes o después de los 18 años. Como esta variable está muy relacionada con la edad de la mujer al momento de tener su primer hijo, las covariables más relevantes en general son las mismas.
+
+[MENCIONAR QUE ES UNA VARIABLE MUY RELACIONADA A LA EDAD AL PRIEMR HIJO CON LO QUE LAS COVARIABLES MAS RELEVANTES EN GENERAL SON LAS MISMAS] LISTO!
 
 ```{r muestra_psexo}
 muestra_psexo <- datos_dhs %>% filter(edad_psexo >= 9) %>% na.omit() %>%
@@ -386,7 +419,11 @@ muestra_psexo <- datos_dhs %>% filter(edad_psexo >= 9) %>% na.omit() %>%
               as_survey_design(ids=psu,strata=estrato, weights=ponderador, nest=TRUE)
 ```
 
-[COMENTAR EL ANALISIS EXPLORATORIO]
+La edad a la que una mujer comienza su vida sexual puede variar según una combinación de factores personales, familiares y sociales. Las influencias más comunes incluyen el entorno cultural en el que crece, el acceso a la educación y la información sobre salud sexual, además de las expectativas sociales y familiares. Además, el contexto económico y la disponibilidad de recursos, como servicios de salud accesibles, también pueden tener un impacto.  
+
+En la @fig-psexo_xpais vemos la proporción de mujeres que comenzaron a tener relaciones sexuales antes y después de los 18 años por país. Lo que más llama la atención es que en los países de Europa como Albania y Armenia casi cuatro quintos de las observaciones comienzan luego de los 18 años, mientras que en el resto de los países esto baja a cerca de un medio del total de observaciones, también mencionar que en Etiopía cerca del 70% del total de observaciones comienzan su vida sexual antes de ésta edad.
+
+[COMENTAR EL ANALISIS EXPLORATORIO] LISTO!
 
 ```{r psexo_xpais}
 #| label: fig-psexo_xpais
@@ -407,6 +444,8 @@ ggplot(aes(x = pais, y = proporcion, fill=edad)) +
   theme_minimal() + labs(x = 'País', y = '') + scale_fill_viridis_d("Comienzo Relaciones\nSexuales",labels=c("Mayor o igual a 18 años", "Menor a 18 años")) + theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+Como en el caso de la edad al primer hijo, en la $fig-edu_att_cls se observa que a medida que los años de educación aumentan, también lo hace la edad a la que las mujeres comienzan su vida sexual. Este patrón es común en la literatura y está relacionado con una mayor conciencia sobre la salud sexual.
+
 ```{r edu_att_clas}
 #| label: fig-edu_att_clas
 #| fig-cap: "Gráfico Densidad, distribución de la edad al primer hijo por Años de Educación de la Madre."
@@ -425,6 +464,10 @@ muestra_psexo %>%
 
 ### Selección de covariables relevantes
 
+En este paso, también se utilizó un modelo de Random Forest para evaluar la importancia de las variables en la predicción de la variable psexo_18, que indica si la mujer comienza a tener relaciones sexuales después de los 18 años. Similar al análisis previo, primero se eliminaron algunas variables asociadas al diseño muestral, así como aquellas que no aportan a la interpretación del modelo, como la edad al primer hijo. Además, se filtraron los datos para incluir solo a mujeres con 9 años o más.
+
+Los datos fueron divididos en conjuntos de entrenamiento y testeo, tomando en cuenta los países mediante el argumento strata para garantizar una distribución proporcional. El conjunto de entrenamiento se compuso de 41,945 observaciones, mientras que el de prueba incluyó 7,404.
+
 ```{r split_psexo}
 datos_psexo <- datos_dhs %>% select(-id,-psu,-estrato,-anio,-ponderador,-edad,-edad_phijo) %>%
    filter(edad_psexo >= 9) %>% na.omit() %>%
@@ -435,6 +478,8 @@ datos_psexo <- datos_dhs %>% select(-id,-psu,-estrato,-anio,-ponderador,-edad,-e
 train_psexo <- training(datos_psexo)
 test_psexo <- testing(datos_psexo)
 ```
+
+Para optimizar el modelo, se empleó la técnica de validación cruzada con 10 folds devuelta, ajustando los hiperparámetros clave como el número mínimo de observaciones por nodo y el número de predictores aleatorios seleccionados en cada división. Al igual que lo realizado en el análisis anterior, se mantuvo una grilla de búsqueda sencilla, y se optó por usar 1000 árboles.
 
 ```{r tune vip_psexo, eval=F}
 vip_psexo_spec <- rand_forest(mtry=tune(), min_n=tune(), trees=1000) %>%
@@ -467,7 +512,9 @@ load('datos/imp_psexo.RData')
 imp_psexo <- vip(vip_psexo_fit,num_features=19)
 ```
 
-[HABLAR UN POCO DE LAS VARIABLES QUE QUEDAN, MENCIONAR QUE SE TOMAN LAS MAS IMPORTANTES]
+En la @fig-vip_psexo se presenta un gráfico de barras que muestra la importancia de las variables utilizadas en el modelo, ordenadas de mayor a menor. A partir de esta evaluación, se seleccionaron las 10 variables más relevantes para continuar con el análisis. Estas variables son: anio_educ, pais, indice_riqueza, n_parejas, anio_educ_par, cant_uniones, hogar_tv, cat_riqueza, noticias y hogar_elect.
+
+[HABLAR UN POCO DE LAS VARIABLES QUE QUEDAN, MENCIONAR QUE SE TOMAN LAS MAS IMPORTANTES] LISTO!
 
 ```{r vip_psexo}
 #| label: fig-vip_psexo
@@ -507,7 +554,7 @@ Por último, se consideran las siguientes variables relacionadas con el comporta
 
 En esta primera aproximación al problema se opta por solamente tomar las observaciones que dispongan de todos los datos necesarios para el modelo, no realizándose imputaciones de datos faltantes o análisis de la no respuesta a la encuesta. 
 
-En total se entrena al modelo con 80359 observaciones de mujeres donde se utilizara un 85% de los datos para entrenar y el 15% restante para evaluar el modelo.
+En total se entrena al modelo con 80,359 observaciones de mujeres donde se utilizara un 85% de los datos para entrenar y el 15% restante para evaluar el modelo.
 
 En este caso se trabaja integramente con 'tidymodels' framework que permite realizar la evaluación de los modelos de manera sencilla. Se opta por evaluar la eficiencia de modelos basados en árboles: Bagging, Random Forest y XGBoost, donde para cada uno se realiza su correspondiente tuneo de hiperparámetros.
 
