@@ -1,6 +1,12 @@
 ---
-title: "Modelado de Variables Demográficas Mediante Algoritmos de Aprendizaje Supervisado"
-format: pdf
+title: | 
+  \vspace{-2cm} 
+   Modelado de Variables Demográficas Mediante Algoritmos de Aprendizaje Supervisado
+subtitle: "Aprendizaje Estadístico Supervisado 2024"
+author: "Facundo Morini, Mateo Pérez, Ignacio Tarigo"
+format: 
+  pdf:
+    fig-pos: h!
 lang: es
 ---
 
@@ -19,13 +25,13 @@ library(DALEX)
 library(DALEXtra)
 ```
 
-\vspace{-6em}
+\vspace{-1.2cm}
 
 # Introducción 
 
 Cuando se trabaja con modelos de micro-simulación en demografía, como el modelado de las tasas específicas de fecundidad por edad (ASFR), uno de los factores usualmente considerados es la edad en que las mujeres comienzan a estar en riesgo de concebir. En este contexto, modelar la edad en que una cohorte de mujeres experimenta su primer nacimiento o inicia su vida sexual puede ser de gran utilidad en este tipo de simulaciones.
 
-En este trabajo se propone el uso de modelos de aprendizaje supervisado para evaluar su desempeño en dos objetivos: por un lado, predecir la edad al primer hijo de las mujeres, y por otro, clasificar si una mujer comienza su vida sexual antes o después de una cierta edad. En ambos casos, se emplearán variables socioeconómicas y comportamentales de las mujeres como predictores. Se priorizará el uso de modelos basados en árboles de decisión, como Bagging, Random Forest y XGBoost.
+En este trabajo se propone el uso de modelos de aprendizaje supervisado para evaluar su desempeño en dos objetivos: por un lado, predecir la edad al primer hijo de las mujeres, y por otro, clasificar si una mujer comienza su vida sexual antes o después de una cierta edad. En ambos casos, se emplearán variables socioeconómicas y comportamentales de las mujeres como predictores. Se priorizará el uso de modelos basados en árboles de decisión, como métodos de *Bagging* o *Boosting*.
 
 Los datos utilizados para este propósito provienen de las encuestas DHS, realizadas principalmente en países en vías de desarrollo. En este caso particular, se analizarán las encuestas de las rondas VI y VII, correspondientes a distintos países y realizadas entre los años 2010 y 2020.
 
@@ -39,7 +45,7 @@ La idea detrás es ayudar a los distintos países sobre todo del continente afri
 
 [^1]: https://dhsprogram.com/data/available-datasets.cfm.
 
-## Selección y descripción de los datos
+## Descripción de los datos
 
 Como primer paso, debido a la magnitud de la encuesta, que abarca un gran número de países y años, se optó por seleccionar un grupo de países representativos de distintas regiones. El objetivo fue capturar la heterogeneidad en las variables de interés desde diversos contextos económicos y culturales. Asimismo, se procuró que las encuestas seleccionadas correspondieran a un período de tiempo similar (en este caso, la década de 2010 a 2020) y que las variables, tanto de interés como explicativas, estuvieran disponibles en todas las encuestas incluidas. Como resultado de este proceso, se eligieron los siguientes países:
 
@@ -47,7 +53,7 @@ Como primer paso, debido a la magnitud de la encuesta, que abarca un gran númer
 - Europa del este: Albania y Armenia.
 - Norte y Sur de África: Etiopía y Sudáfrica.
 
-En este caso, se dispone de un total de aproximadamente 105,000 observaciones correspondientes a mujeres de entre 15 y 64 años. Estas observaciones incluyen variables relacionadas con aspectos económicos, sociales y de salud reproductiva. Una complicación presente en los datos es que las disponibilidad de las distintas variables pueden variar de un país al otro y el proceso de descarga si se seleccionan demasiadas variables puede ser muy lento. Por esta razón se realizó un filtrado previo de las variables a utilizar. Como resultado, se trabaja principalmente con 30 variables que están disponibles para todos los países seleccionados y que, a priori, se consideran posiblemente relevantes para el análisis. 
+En este caso, se dispone de un total de aproximadamente 105,000 observaciones correspondientes a mujeres de entre 15 y 64 años. Estas observaciones incluyen variables relacionadas con aspectos económicos, sociales y de salud reproductiva. Una complicación presente en los datos es que las disponibilidad de las distintas variables pueden variar de un país al otro y ciertas variables pueden presentar demasiados valores faltantes para algunos países para ser utilizable en los modelos. Por esta razón se realizó un filtrado previo de las variables a utilizar. Como resultado, se trabaja principalmente con 30 variables que están disponibles para todos los países seleccionados y que, a priori, se consideran posiblemente relevantes para el análisis. 
 
 ```{r preprocesado}
 datos_dhs <- read.csv('datos/dhs_6_7.csv') %>%
@@ -94,8 +100,8 @@ mutate(v000 = as.factor(case_when(
   # Conocimiento de métodos anticonceptivos
   v301 = as.factor(case_when(v301==0~'Ninguno', v301==1~'Folklórico', v301==2~'Tradicional', v301==3~'Moderno')),
   # Intención de uso de métodos anticonceptivos
-  v364 = as.factor(case_when(v364%in%1:2~'Usando Metodo',
-  v364%in%3:4~'No Usando Metodo',v364==5~'Nunca Tiene Relaciones')),
+  v364 = as.factor(case_when(v364%in%1:2~'Usando Método',
+  v364%in%3:4~'No Usando Método',v364==5~'Nunca Tiene Relaciones')),
   # Cantidad de uniones
   v503 = as.factor(case_when(v501%in%c(0,2)~'No casada',v503==1~'Una', v503==2~'Más de Una')),
   # Edad al primer acto sexual
@@ -108,9 +114,9 @@ mutate(v000 = as.factor(case_when(
   # Años de educación de la pareja
   v715 = as.numeric(case_when(v715%in%97:99~NA, T~v715)),
   # Ocupación de la mujer
-  v717 = as.factor(case_when(v717==0~'No Trabaja', v714==0~'No Trabaja', v717==1~'Profesional/Tecnico',v717%in%4:5~'Agricultura',v717%in%c(3,7)~'Servicios/Ventas',v717==6~'Domestico',v717%in%8:9~'Manual')),
+  v717 = as.factor(case_when(v717==0~'No Trabaja', v714==0~'No Trabaja', v717==1~'Profesional/Técnico',v717%in%4:5~'Agricultura',v717%in%c(3,7)~'Servicios/Ventas',v717==6~'Domestico',v717%in%8:9~'Manual')),
   # Numero de parejas sexuales
-  v836 = as.numeric(case_when(v836 %in% 96:99 ~ NA, T~v836))) %>% select(-SurveyId,-v501,-v714) %>% mutate(v190=factor(v190,levels=c('Más Pobre','Pobre','Medio','Rico','Más Rico'),ordered=T),v503=factor(v503,levels=c('No casada','Una','Más de Una'),ordered=T)) 
+  v836 = as.numeric(case_when(v836 %in% 96:99 ~ NA, T~v836))) %>% select(-SurveyId,-v501,-v714) 
 
 cod_variables <- names(datos_dhs)
 
@@ -127,21 +133,21 @@ desc_variables <- c(
   'Indica si la mujer es de un área urbana o rural',
   'Indica si el hogar tiene acceso a electricidad',
   'Indica si el hogar dispone de una televisión',
-  'Total años de educación de la mujer, se calcula a partir del nivel máximo de educación alcanzado, es un valor comparable entre países.',
+  'Total de años de educación de la mujer, calculado a partir del nivel máximo de educación alcanzado; es un valor comparable entre países',
   'Total de personas que viven en el hogar',
-  'Frecuencia con que la mujer lee un periódico, revista o libro',
-  'Frecuencia con que la mujer escucha la radio',
-  'Frecuencia con que la mujer ve noticias',
-  'Categoria de riqueza del hogar',
-  'Índice de riqueza del hogar estandarizado, se calcula a partir de distintas medidas como materiales de construcción de la casa y servicios disponibles, 5 dígitos corresponden a decimales.',
+  'Frecuencia con la que la mujer lee un periódico, revista o libro',
+  'Frecuencia con la que la mujer escucha la radio',
+  'Frecuencia con la que la mujer ve noticias',
+  'Categoría de riqueza del hogar',
+  'Índice de riqueza del hogar estandarizado, calculado a partir de distintas medidas como materiales de construcción de la casa y servicios disponibles; 5 dígitos corresponden a decimales',
   'Edad de la mujer al primer hijo',
-  'Conocimiento de algún método anticonceptivo, donde se distingue entre modernos (ej: Condon, pastillas, parches, etc.), tradicionales (ej: Coito interrumpido, calendario, etc.) y folklóricos (ej: Amuletos, rituales, etc.)',
+  'Conocimiento de algún método anticonceptivo, donde se distingue entre modernos (ej.: condón, pastillas, parches, etc.), tradicionales (ej.: coito interrumpido, calendario, etc.) y folklóricos (ej.: amuletos, rituales, etc.)',
   'Intención de uso de métodos anticonceptivos',
   'Cantidad de uniones que ha tenido la mujer',
   'Edad de la mujer al primer acto sexual',
   'Relaciones sexuales recientes de la mujer',
   'Número ideal de hijos',
-  'Total años de educación de la pareja de la mujer',
+  'Total de años de educación de la pareja de la mujer',
   'Ocupación de la mujer',
   'Cantidad de parejas sexuales que ha tenido la mujer'
 )
@@ -176,10 +182,8 @@ tipo_variables <- c(
   'Numérica Discreta' #n_parejas
 )
 
-rec_variables <- c(paste0(nrow(datos_dhs),' Mujeres'), 
-                   paste0(length(levels(datos_dhs$v000)),' Paises'),
-                   ' ',
-                   paste0(min(datos_dhs$v007),'-',max(datos_dhs$v007)),
+rec_variables <- c(paste0(nrow(datos_dhs),' Mujeres'),  paste0(length(levels(datos_dhs$v000)),' Paises'),
+                   ' ', paste0(min(datos_dhs$v007),'-',max(datos_dhs$v007)),
                    paste0(min(datos_dhs$v012),'-',max(datos_dhs$v012)),
                    ' ',
                    ' ',
@@ -204,21 +208,21 @@ tabla_variables <- data.frame(cod_variables, name_variables,desc_variables,tipo_
 names(datos_dhs) <- name_variables 
 ```
 
-```{r}
-kable(tabla_variables, caption = 'Descripción de las variables disponibles en el trabajo', col.names = c('Codigo DHS','Nombre','Descripción','Tipo','Recorrido'), align = 'ccllc', booktabs = TRUE) %>% 
-  kable_styling(latex_options = "striped", font_size = 7, position = "center") %>% column_spec(3, width = '25em') %>%
-  column_spec(5, width = '10em') %>% column_spec(c(1,2), width = '5em')
+```{r tabla_variables}
+kable(tabla_variables, caption = 'Descripción de las variables disponibles en el trabajo.', col.names = c('Codigo DHS','Nombre','Descripción','Tipo','Recorrido'), align = 'clllc', booktabs = TRUE) %>% 
+  kable_styling(latex_options = "striped", font_size = 7.5, position = "center") %>% column_spec(3, width = '26em') %>%
+  column_spec(5, width = '10em') %>% column_spec(c(1,2), width = '4.5em')
 ```
 
 Antes de realizar el análisis exploratorio, se procede a limpiar los datos. Tomándose la precaución en cada variable de considerar las codificaciones de no respuesta y dato faltante, como el valor 99, que puede afectar la interpretación sobre todo en variables numéricas.
 
-Se debe tener en cuenta que los datos provienen de una muestra compleja, debido a que éstas encuestas utilizan un diseño muestral estratificado y por conglomerados, lo que implica que las observaciones no son independientes. Por lo tanto se requiere del uso de pesos muestrales para hacer inferencias correctas, pero para el propósito de este trabajo, se optó por no incorporar explícitamente el diseño muestral en los modelos aunque si se ha tenido en cuenta la importancia de los pesos muestrales en el análisis exploratorio, lo cual permite una mejor comprensión de la estructura y distribución de los datos. Para esto último se utilizó la librería 'srvyr', la cuál nos permite trabajar de una manera correcta con la encuesta, nos deja incorporar el diseño muestral utilizado a nuestros datos, pasando como argumentos la unidad primaria de muestreo, el estrato del que se obtuvo la observación y el peso de la mujer en la encuesta.
+Se debe tener en cuenta que los datos provienen de una muestra compleja, donde se utiliza un diseño muestral por conglomerados estratificado en dos etapas, donde en general se busca que la misma sea representativa tanto a nivel nacional, regional como al contexto urbano y rural. 
 
-[HABLAR UN POCO DEL DISEÑO MUESTRAL Y QUE SE CONTEMPLA EN EL ANALISIS EXPLORATORIO Y SE OPTO POR NO CONSIDERARLO EN LOS MODELOS] LISTO!
+Debido a esto para una mejor representación a nivel de poblacional el diseño debería ser contemplado en los modelos a utilizar. En modelos como *Random Forest* la biblografia de como incorporar esta información del diseño no esta ampliamente desarrollada, por lo cual para esta primera aproximación al problema se optó por no incorporar explícitamente en los modelos aunque si se ha tenido en cuenta en el análisis exploratorio, lo cual permite una mejor comprensión de la estructura y distribución de los datos. 
 
-## Edad al primer hijo
+\newpage
 
-[HAY QUE ACTUALIZAR EL TEXTO Y LOS GRAFICOS A LOS ULTIMOS DATOS UTILIZADOS, HACER GRAFICOS SOLO DE LAS VARIABLES QUE SE VEAN MAS IMPORTANTES EN EL RF] LISTO!
+### Edad al primer hijo
 
 ```{r muestra_phijo}
 muestra_phijo <- datos_dhs %>% filter(edad_phijo >= 11) %>% na.omit() %>%
@@ -227,14 +231,14 @@ muestra_phijo <- datos_dhs %>% filter(edad_phijo >= 11) %>% na.omit() %>%
 
 La edad en que las mujeres comienzan a tener hijos está influenciada por una serie de factores en los que se encuentran comportamientos sociales como también por aspectos económicos y culturales. En la bibliografía suelen mencionarse algunos factores que están fuertemente vinculados a los procesos de fecundidad, como la mayor participación en el mercado laboral, el acceso a la educación de las mujeres, la planificación familiar y el uso de métodos anticonceptivos.
 
-En la @fig-phijo_xpais se puede observar como, dependiendo de que país sea la mujer encuestada, varía la edad que tenían al momento en que nació su primer hijo, algo esperable viniendo de paises con contextos muy distintos. En países como Etiopía, Guatemala o Dominicana, hay una gran parte de las mujeres encuestadas que tiene su primer hijo con veinte años o menos, mientras que en países del Este de Europa algo más desarrollados como Armenia o Albania, la edad al primer hijo tiende a ser mayor con una media por encima de los 20 años, patrón que usualmente se observa mientras más desarrollo más se atrasan todos los procesos relacionados con la fecundidad. Más allá de las diferencias, existe una gran concentración de mujeres que tienen su primer hijo entre los 18 y 23 años en todos los países.
+En la @fig-phijo_xpais y tabla posterior se puede observar como, dependiendo de que país sea la mujer encuestada, varía la edad que tenían al momento en que nació su primer hijo, algo esperable viniendo de paises con contextos muy distintos. En países como Etiopía, Guatemala o Dominicana, hay una gran parte de las mujeres encuestadas que tiene su primer hijo con veinte años o menos, mientras que en países del Este de Europa algo más desarrollados como Armenia o Albania, la edad al primer hijo tiende a ser mayor con una media por encima de los 20 años. Este patrón es usualmente observado mientras más desarrollo más se atrasan todos los procesos relacionados con la fecundidad. Más allá de las diferencias, existe una gran concentración de mujeres que tienen su primer hijo entre los 18 y 23 años en todos los países, esto esta fuertemente relacionado a la edad en que las mujeres comienzan a vivir en pareja o se casan, donde comienzan a tener usualmente riesgo a concebir.
 
 ```{r phijo_xpais}
 #| label: fig-phijo_xpais
-#| fig-cap: "Gráfico violín, distribución de la edad al primer hijo por país, donde el punto indica la edad media."
+#| fig-cap: "Gráfico violín, distribución de la edad al primer hijo por país."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 4
+#| fig-width: 6.4
 
 mean_ephijo <- muestra_phijo %>% 
               group_by(pais) %>%
@@ -246,19 +250,19 @@ ggsurvey(aes(x = edad_phijo, y = pais, fill=pais))  + geom_violin() +
   theme_minimal() + labs(x = 'Edad al primer hijo', y = 'País') + theme(legend.position = 'none') + scale_fill_viridis_d() 
 ```
 
-```{r}
-kable(mean_ephijo %>% mutate(across(c('edad_phijo', 'edad_phijo_se'), ~ round(., 2))) %>% arrange(edad_phijo), caption = 'Media y Desvio Estimados de la Edad al Primer Hijo por país', col.names = c('País','Media edad al primer hijo','Desvio'), align = 'lcc', booktabs = TRUE) %>% 
+```{r tabla_mean_phijo}
+kable(mean_ephijo %>% mutate(across(c('edad_phijo', 'edad_phijo_se'), ~ round(., 2))) %>% arrange(edad_phijo), caption = 'Media y Desvio Estimados de la Edad al Primer Hijo por país', col.names = c('País','Media Edad','Desvio'), align = 'lcc', booktabs = TRUE) %>% 
   kable_styling(latex_options = "striped", font_size = 9, position = "center") %>% column_spec(1, width = '20em') %>% column_spec(c(2,3), width = '5em')
 ```
 
-Uno de los factores más importantes en el proceso del desplazamiento de la fecundidad a edades más avanzadas es el logro educativo de las mujeres. Esto es algo que en los datos utilizados en este trabajo debería poder ser captado. En la @fig-edu_att se observa la distribución de la edad al primer hijo donde cada línea corresponde a la cantidad de años de educación que tuvo la madre. En este caso, se puede observar claramente un corrimiento hacia la derecha de las modas de la distribución a medida que la mujer tiene más años de educación. Esto indica que mientras más estudios tienen las mujeres, más aplazan el momento de tener su primer hijo. Con lo cual en un principio esta variable debería ser útil para predecir la variable de interés.
+Uno de los factores más importantes en el proceso del desplazamiento de la fecundidad a edades más avanzadas es el logro educativo de las mujeres. Esto es algo que en los datos utilizados en este trabajo debería poder ser captado. En la @fig-edu_att se observa la distribución de la edad al primer hijo donde cada línea corresponde a la cantidad de años de educación que tuvo la madre. En este caso, se puede observar claramente un corrimiento hacia la derecha de las modas de la distribución a medida que la mujer tiene más años de educación. Esto indica que mientras más estudios tienen las mujeres, más aplazan el momento de tener su primer hijo. Con lo cual en un principio esta variable y las relacionadas debería ser útiles para predecir la variable de interés.
 
 ```{r edu_att}
 #| label: fig-edu_att
-#| fig-cap: "Gráfico Densidad, distribución de la edad al primer hijo por Años de Educación de la Madre."
+#| fig-cap: "Gráfico Densidad, edad al primer hijo por Años de Educación de la Madre."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 3.6
+#| fig-width: 6.2
 
 muestra_phijo %>% filter(anio_educ<22) %>%
   ggsurvey(aes(x = edad_phijo, color = anio_educ, group=anio_educ)) + geom_density(linewidth=0.8) +
@@ -266,48 +270,47 @@ muestra_phijo %>% filter(anio_educ<22) %>%
        y = "Frecuencia") +
   theme_minimal() + scale_color_viridis_c(name = "Años de Educación")
 ```
+\newpage
 
-Este patrón es repetido por todos los países, aunque su efecto es más marcado en algunos paises, se observa la @fig-edu_att_xpais donde se tiene la distribución de la edad al primer hijo por país y si la madre presenta mas de 15 años de educación, este número surge del término de la educación secundaria, aunque puede variar según el país, 15 años de estudio es en general el momento en que se termina el nivel secundario. En todos los países, las mujeres con más años de educación tienden a tener su primer hijo a una edad más avanzada, aunque en países como Albania, este efecto parece bastante menos notorio.
+Este patrón es repetido por todos los países, aunque su efecto es más marcado en algunos países, se observa la @fig-edu_att_xpais donde se tiene la distribución de la edad al primer hijo por país y si la madre presenta mas de 15 años de educación (años usualmente de completado grado secundario). En todos los países, las mujeres con más años de educación tienden a tener su primer hijo a una edad más avanzada, aunque en países como Albania, este efecto parece bastante menos notorio.
 
 ```{r edu_att_xpais}
 #| label: fig-edu_att_xpais
 #| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 3.8
+#| fig-width: 6.4
 
-muestra_phijo %>% mutate(anio_edu_15=as.factor(ifelse(anio_educ>=15,1,0))) %>%
+muestra_phijo %>% mutate(anio_edu_15=as.factor(ifelse(anio_educ>=15,1,0)),pais=case_when(pais=="República Dominicana"~"Rep. Dominicana",T~pais)) %>%
  ggsurvey(aes(x = pais, y=	edad_phijo, fill=anio_edu_15)) + 
   geom_boxplot(color = "grey") + theme_minimal()+ scale_fill_viridis_d(name='Años de educación', labels = c('Menor a 15 años', 'Mayor o igual a 15 años')) + labs(x = 'País', y = 'Edad al Primer Hijo') + theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-En la @fig-riqueza_xpais podemos observar la distrbución de la edad al primer hijo para los ditintos niveles de riqueza de los hogares, para algunos países, en general en todos los países observamos como se atrasa la edad a medida que el hogar es más rico, sobre todo en Albania, Perú y Sudáfrica. En otros como Dominicana o Armenia vemos que los niveles de riqueza están más concentrados en algún valor, salvo por el nivel más rico que ahí si se muestra un desplazamiento, no muy grande, pero un desplazamiento en fin, hacia edades un poco mayores. Por lo tanto se podría decir que en este caso la riqueza del hogar es una variable importante en este estudio.
+En la @fig-riqueza_xpais podemos observar la distribución de la edad al primer hijo para los distintos niveles de riqueza de los hogares, para algunos países, en general en todos los países observamos como se atrasa la edad a medida que el hogar es más rico, sobre todo en Albania, Perú y Sudáfrica. En otros como Dominicana o Armenia vemos que los niveles de riqueza están más concentrados en algún valor, salvo por el nivel más rico que ahí si se muestra un desplazamiento, no muy grande, pero un desplazamiento en fin, hacia edades un poco mayores. Por lo tanto se podría decir que en este caso la riqueza del hogar es una variable importante en este estudio.
 
-[MUESTRA QUE LA RIQUEZA DEL HOGAR ES UNA VARIABLE IMPORTANTE COMO SE ATRASA A MEDIDA QUE EL HOGAR ES MAS RICO SOBRE TODO PARA ALGUNOS PAISES] LISTO!
+Otro aspecto interesante en este tipo de estudio que se suele ver, es la cantidades de uniones y parejas sexuales que tienen las mujeres, por lo que se presenta la @fig-comp_parejas, donde observamos la distribución de la edad al primer hijo según estas variables. Vemos que las mujeres con más uniones tienden a tener hijos más jóvenes cuando tienen más de una pareja sexual, y además observamos esta tendencia en las mujeres con más parejas sexuales que no están casadas. También podemos observar que en las mujeres con una sola unión la edad al primer hijo se encuentra concentrada en los 20 años, fuertemente vinculado a la edad a esa unión. 
 
 ```{r riqueza_xpais}
 #| label: fig-riqueza_xpais
-#| fig-cap: "Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar para algunos paises."
+#| fig-cap: "Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 3.5
+#| fig-width: 6.4
 
 muestra_phijo %>% filter(pais%in%c('Armenia','Albania','Guatemala','Perú','Sudáfrica','República Dominicana')) %>%
+  mutate(cat_riqueza = factor(cat_riqueza, levels = c('Más Pobre', 'Pobre', 'Medio', 'Rico', 'Más Rico'), ordered = T)) %>%
   ggsurvey(aes(x = edad_phijo, color = cat_riqueza, group=cat_riqueza)) + geom_density(linewidth=0.5,alpha=.4) + facet_wrap(~pais) +
   labs(x = "Edad al Primer Hijo",
        y = "Frecuencia") +
   theme_minimal() + scale_color_viridis_d(name = "Riqueza del Hogar") + theme(legend.position='top')
 ```
 
-Otro aspecto interesante en este tipo de estudio que se suele ver, es la cantidades de uniones y parejas sexuales que tienen las mujeres, por lo que se presenta la @fig-comp_parejas, donde observamos la ditrbución de la edad al primer hijo según estas variables. Vemos que las mujeres con más uniones tienden a tener hijos más jóvenes cuando tienen más de una pareja sexual, y además observamos esta tendencia en las mujeres con más parejas sexuales que no están casadas. También podemos observar que en las mujeres con una sola unión la edad al primer hijo se encuentra concentrada en los 20 años. 
-
-[HABLAR QUE LAS MUJERES CON MAS UNIONES TIENDEN A TENER HIJOS MAS JOVENES Y QUE MAS PAREJAS SEXUALES INDICA UNA LEVE TENDENCIA A TENER HIJOS MAS JOVENES PARA MUJERES SIN CASAR O CON MAS DE UNA UNION, MENCIONAR QUE LAS MUJERES CON UNA SOLA UNION TIENDEN A ESTAR CONCENTRADAS EN 20 AÑOS ] LISTO!
 ```{r comp_parejas}
 #| label: fig-comp_parejas
 #| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por cantidad de uniones y cantidad de parejas sexuales."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 3
+#| fig-width: 6
 
 muestra_phijo %>% mutate(n_parejas=as.factor(case_when(n_parejas == 1 ~ '1', n_parejas == 2 ~ '2', n_parejas == 3 ~ '3', 
 n_parejas >= 4 ~ '4 o más'))) %>%
@@ -317,15 +320,16 @@ n_parejas >= 4 ~ '4 o más'))) %>%
   theme_minimal() + scale_fill_viridis_d(name="Cantidad de uniones")
 ```
 
-Otro aspecto que podría afectar en la edad al primer hijo podría estar relacionado con el acceso a distintos objetos materiales, como por ejemplo la televisión. En la @fig-hogar_tv vemos esta distrbución de la edad de las mujeres al primer hijo para esta variable por país, la cual nos muestra que en todos estos países la edad media al primer hijo se encuentra un poco por encima cuando los hogares tienen al menos una televisión. Ésta diferencia es muy marcada en países como Etipía y Albania, pero no está tan clara en países como Armenia y Sudáfrica. Cabe destacar además, que para Armenia y Albania existen muy pocas observaciones en donde los hogares no tuvieran una televisión, mientras que en Etipía hay 3 veces más hogares que no disponen de una televisión que los que si.
+\newpage
+
+Otro aspecto que podría afectar en la edad al primer hijo podría estar relacionado con el acceso a distintos objetos materiales que muestra el contexto económico de la mujer, como por ejemplo la televisión. En la @fig-hogar_tv vemos esta distribución de la edad de las mujeres al primer hijo para esta variable por país, la cual nos muestra que en todos estos países la edad media al primer hijo se encuentra un poco por encima cuando los hogares tienen al menos una televisión. Ésta diferencia es muy marcada en países como Etipía y Albania, pero no está tan clara en países como Armenia y Sudáfrica. Cabe destacar además, que para Armenia y Albania existen muy pocas observaciones en donde los hogares no tuvieran una televisión, mientras que en Etiopía hay 3 veces más hogares que no disponen de una televisión que los que si.
 
 ```{r hogar_tv}
 #| label: fig-hogar_tv
 #| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por si el hogar dispone de una televisión o no por país."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
-
+#| fig-height: 4
+#| fig-width: 6.2
 muestra_phijo %>% 
  ggsurvey(aes(y = edad_phijo, x= pais, fill = hogar_tv))  + 
   geom_boxplot(color = "grey") + 
@@ -336,15 +340,73 @@ muestra_phijo %>%
   theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-### Selección de covariables relevantes
+### Primera relación sexual
 
-En este paso del estudio, lo que se realizó fue un Random Forest para determinar la importancia de las variables, seleccionando las más relevantes. Lo primero que se hizo fue sacar algunas variables relacionadas al diseño muestral, además de las variables que indican la edad de las mujeres y la edad al momento de la primera relación sexual ya que no se considera que tenga sentido para la utilidad del modelo. Luego dividimos los datos en entrenamiento y testeo, teniendo en cuenta además los países mediante el argumento strata, obteniendo entonces 39,122 datos de entrenamiento y 6,907 datos para testeo.
+La edad en que las mujeres comienzan a tener relaciones sexuales marca el inicio del riesgo a concebir y por tanto la misma esta fuertemente relacionada con la edad al primer hijo. Gran parte de las variables comportamentales, económicas, educativas de la mujer que se observaron en la edad al primer hijo, también son relevantes para la edad al primer acto sexual. En este caso se trabajará con la variable si la mujer comienza su vida sexual antes o después de los 18 años.
 
-[HABLAR DE QUE SE REALIZA UN RF PARA DETERMINAR IMPORTANCIA DE VARIABLES, SELECCIONANDO LAS MAS RELEVANTES] LISTO!
+En la @fig-psexo_xpais se puede observar la proporción estimada de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país, donde se observa un patrón bastante marcado. Países tanto latinos como africanos tienden a tener una proporción bastante igualada entre mujeres que comienzan a tener relaciones sexuales antes y después de los 18 años, mientras que en los países del este europeo seleccionados que comparten un contexto cultural y religioso similar tienden a tener una proporción mucho mayor de mujeres que comienzan a tener relaciones sexuales después de los 18 años, estando por encima del 80% en ambos casos.
 
-[CAPAZ MENCIONAR QUE LO DE QUE LA EDAD A LA PRIMERA RELACIÓN SEXUAL NO SE CONSIDERA YA QUE NO TIENE DEMASIADO SENTIDO PARA LA UTILIDAD DEL MODELO] LISTO!
+```{r muestra_psexo}
+muestra_psexo <- datos_dhs %>% filter(edad_psexo >= 9) %>% na.omit() %>%
+   mutate(psexo_18 = ifelse(edad_psexo >= 18, 1, 0)) %>%
+              as_survey_design(ids=psu,strata=estrato, weights=ponderador, nest=TRUE)
+```
 
-[MENCIONAR LA CANTIDAD DE DATOS UTILIZADOS, LA CANTIDAD DE DATOS PARA ENTRENAR Y QUE SE DIVIDEN TENIENDO ENCUENTA LOS PAISES (STRATA=PAIS)] LISTO!
+
+```{r psexo_xpais}
+#| label: fig-psexo_xpais
+#| fig-cap: "Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país."
+#| fig-align: center
+#| fig-height: 3.5
+#| fig-width: 5
+
+prop_psexo <- muestra_psexo %>%
+              group_by(pais) %>%
+              summarise(mayor_18 = survey_mean(psexo_18), menor_18 = 1-survey_mean(psexo_18)) %>% select(pais,mayor_18,menor_18)  %>% pivot_longer(cols = c("mayor_18","menor_18"), 
+               names_to = "edad", 
+               values_to = "proporcion")
+  
+prop_psexo %>%
+ggplot(aes(x = pais, y = proporcion, fill=edad)) +
+  geom_bar(stat = "identity", position = "fill") +
+  theme_minimal() + labs(x = 'País', y = '') + scale_fill_viridis_d("Comienzo Relaciones\nSexuales",labels=c("Mayor o igual a 18 años", "Menor a 18 años")) + theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Al igual que en el caso de la edad al primer hijo, la educación de la mujer deberia ser un factor muy relevante para esta variable de interes. En la @fig-edu_att_clas se observa la distribución de los años de educación de la mujer por si comienzan a tener relaciones sexuales antes o después de los 18 años. En este caso, se observa que las mujeres que comienzan a tener relaciones sexuales después de los 18 años tienden a tener mas años de educación con una gran concentracion en los 10 años de educacion, mientras que las que comienzan antes de los 18 años tienden a situarse entre los 0 a 10 años de educación.
+
+\newpage
+
+```{r edu_att_clas}
+#| label: fig-edu_att_clas
+#| fig-cap: "Gráfico de caja, distribución de años de educación de la mujer por comienzo de relaciones sexuales."
+#| fig-align: center
+#| fig-height: 3.2
+#| fig-width: 5
+
+muestra_psexo %>% 
+  ggsurvey(aes(x = as.factor(psexo_18), y = anio_educ,fill=as.factor(psexo_18))) + geom_boxplot(color = "grey") +
+  labs(x = "",
+       y = "Años de Educación de la Mujer") +
+  theme_minimal() + scale_fill_viridis_d(name = "Comienzo Relaciones Sexuales",labels=c("Menor a 18 años","Mayor o igual a 18 años"))
+```
+
+
+[AÑADIR ALGUN GRAFICO EXPLORATORIO MAS (VER IMPORTANCIAS)]
+
+
+\vspace{10cm}
+
+\newpage
+
+# Modelado de la edad al primer hijo
+
+Antes de comenzar con el modelado se procede a realizar un filtrado de los datos y a seleccionar las variables más relevantes para el modelo.
+
+En esta primera aproximación al problema se opta por solamente tomar las observaciones que dispongan de todos los datos necesarios para el modelo, no realizándose imputaciones de datos faltantes o análisis de la no respuesta a la encuesta. 
+
+En total se utilizan 46029 observaciones de mujeres donde se utilizara un 85% de los datos para entrenar y el 15% restante para evaluar los modelos considerados. En esta división se tendrá en cuenta el país de origen de la mujer para que no haya un desbalance de muchas observaciones de algún país en particular, teniendo en cuenta que algunos países cuentan con más observaciones que otros.
+
+Uno de los problemas que se presentan en datos provenientes de encuestas es la presencia de valores extremos posiblemente vinculados a errores en el rellenado o por falta de conocimiento de la mujer encuestada. Para el caso de la edad al primer hijo, se filtran las observaciones con valores extremadamente atípicos o que no tienen sentido desde el punto de vista biológico, como un valores de 3 años. En este caso, se consideran únicamente las mujeres que tuvieron su primer hijo a partir de los 11 años, límite establecido con base en criterios biológicos.
 
 ```{r split_phijo}
 datos_phijo <- datos_dhs %>% select(-id,-psu,-estrato,-anio,-ponderador,-edad,-edad_psexo) %>%
@@ -355,9 +417,13 @@ train_phijo <- training(datos_phijo)
 test_phijo <- testing(datos_phijo)
 ```
 
-En la búsuqeda de un modelo eficiente con hiperparámetros óptimos, mediante la técnica de validación cruzada utilizando 'k-folds cross validation' con 10 folds, se busca el número mínimo de observaciones por nodo *(min_n)* y el número de predictores que se seleccionarán aleatoriamente en cada división *(mtry)*. Cabe mencionar además que la grilla no se afino demasiado y que se usan 1000 árboles.
+## Selección de covariables relevantes
 
-[MENCIONAR QUE SE TUNEA (MTRY Y MIN_N) EL RF PARA OBTENER LA IMPORTANCIA CON CV PERO SIN AFINAR MUCHO LA GRILLA Y QUE SE USAN 1000 ARBOLES] LISTO!
+Antes de seleccionar las variables para el modelo, se excluyen aquellas que carecen de sentido práctico. Por ejemplo, la variable edad de la mujer no se considera, ya que al trabajar únicamente con mujeres que ya han tenido hijos, incluirla implicaría utilizar una variable estrechamente relacionada con la variable de interés, lo que podría sesgar el modelo, especialmente en el caso de mujeres muy jóvenes. A su vez se excluye también la variable de edad a la primera relación sexual, ya que como se vio en el análisis exploratorio están muy fuerte relacionadas e interesa mas ver el efecto de otros factores desconociendo esta variable.
+
+Debido a que se cuenta con un gran número de variables que posiblemente no sean todas relevantes, como paso previo a cada modelo se realiza un análisis de importancia de las variables. Para esto se utiliza un modelo de *Random Forest* donde se utiliza el método de permutación para calcular la importancia de las variables. 
+
+Para el ajuste de este modelo no se procura analizar ni afinar en detalle la grilla de hiperparámetros, sino que se busca obtener un modelo relativamente bueno del que se pueda extraer las variables más importantes. En base a esto se utiliza una grilla de 30 combinaciones posibles de la cantidad de variables a considerar en cada nodo (*mtry*) y la cantidad mínima de observaciones en cada nodo terminal (*min_n*). Se utilizó un *10-fold cross-validation* para evaluar los modelos y se seleccionó el mejor modelo en base a la métrica de raíz del error cuadrático medio.
 
 ```{r tune vip_phijo, eval=F}
 vip_phijo_spec <- rand_forest(mtry=tune(), min_n=tune(),  trees=1000) %>%
@@ -389,97 +455,319 @@ load('datos/imp_phijo.RData')
 imp_phijo <- vip(vip_phijo_fit,num_features=19)
 ```
 
-En la @fig-vip_phijo vemos en forma de barras la importancia de las variables en este modelo, ordenadas de mayor a menor importancia. Como mencionamos al comienzo del estudio, lo que se busca son las variables con mayor importancia para continuar con el estudio, por lo que elegimos las 10 variables más relevantes para seguir adelante. Por lo tanto de ahora en adelante se trabajará con las variables: anio_educ, pais, indice_riqueza, cant_uniones, anio_educ_par, hogar_tv, cat_riqueza, n_parejas, nideal_hijos y n_fam_hogar.
-
-[HABLAR UN POCO DE LAS VARIABLES QUE QUEDAN, MENCIONAR QUE SE TOMAN LAS MAS IMPORTANTES (POR EJEMPLO 10)] LISTO!
+En la @fig-vip_phijo se observa la importancia de las variables consideradas en el modelo seleccionado. El mismo pareciera ser consistente con lo esperado, donde variables relacionadas con la educación o riqueza del hogar tienden a tener mayor importancia algo que concuerda con el análisis exploratorio previo. Aunque llama la atención que las variables relacionadas con la planificación familiar como el conocimiento de métodos anticonceptivos se encuentren en los últimos lugares de importancia, algo que en la literatura se destaca como un buen predictor de los procesos de fecundidad.
 
 ```{r vip_phijo}
 #| label: fig-vip_phijo
 #| fig-cap: "Gráfico barras, importancia de las variables consideradas en el modelo de Random Forest mediante permutación para predecir la edad al primer hijo."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 3.8
+#| fig-width: 6.2
 
 imp_phijo + labs(x = 'Variable', y = 'Importancia') + theme_minimal()
 ```
+
+Una vez visualizados los datos y posibles relaciones en las variables se procede a armar los modelos. De lo visto mediante el modelo de *Random Forest* se seleccionan las *10* variables que más importancia presentaron para predecir la edad al primer hijo.
 
 ```{r best_vars_phijo}
 best_vars_phijo <- imp_phijo$data %>% slice_max(order_by = Importance, n=10) %>% pull(Variable)
 ```
 
-## Primera relación sexual
+En este caso las variables que quedaron seleccionadas son:
 
-Como mencionamos al comienzo, esta parte va a tratar sobre un problema de clasificación en el que se buscará clasificar si una mujer comienza su vida sexual antes o después de los 18 años. Como esta variable está muy relacionada con la edad de la mujer al momento de tener su primer hijo, las covariables más relevantes en general son las mismas.
+1. Años de educación de la mujer.
+2. País de procedencia de la mujer.
+3. Indice de riqueza del hogar.
+4. Cantidad de uniones que ha tenido la mujer.
+5. Años de educación de la pareja de la mujer.
+6. Si el hogar dispone de televisión.
+7. Categoría de riqueza del hogar.
+8. Numero de parejas sexuales que ha tenido la mujer.
+9. Numero ideal de hijos.
+10. Numero de personas que viven en el hogar.
 
-[MENCIONAR QUE ES UNA VARIABLE MUY RELACIONADA A LA EDAD AL PRIEMR HIJO CON LO QUE LAS COVARIABLES MAS RELEVANTES EN GENERAL SON LAS MISMAS] LISTO!
+En este caso se trabaja integramente con '*tidymodels*' framework que permite realizar la evaluación de los modelos de manera sencilla. Se opta por evaluar la eficiencia de modelos basados en árboles: *Bagging*, *Random Forest* y *XGBoost*, donde para cada uno se realiza su correspondiente tuneo de hiperparámetros.
 
-```{r muestra_psexo}
-muestra_psexo <- datos_dhs %>% filter(edad_psexo >= 9) %>% na.omit() %>%
-   mutate(psexo_18 = ifelse(edad_psexo >= 18, 1, 0)) %>%
-              as_survey_design(ids=psu,strata=estrato, weights=ponderador, nest=TRUE)
+## Búsqueda de Hiperparámetros 
+
+Se procede a la búsqueda de hiperparámetros para los modelos en busca del modelo que presente la mejor *performance*. Para esto se crea una grilla especifica para cada uno, evaluando todos los modelos en conjunto mediante *workflow_map*.
+
+Para los modelos de *Bagging* se entrenaron los parámetros de de cantidad mínimas de observaciones en cada nodo terminal (*min_n*) y la cantidad de arboles (*trees*). En la siguiente tabla se puede observar la grilla utilizada, que luego se visualizara si la misma es la adecuada para este problema.
+
+```{r, bagging_grid}
+tibble(min_n = c(50,100,150,200,250,300,350,400,450,500,
+                                 1000,1500,2000,2500),
+       trees = c(50,100,500,1000,"","","","","","","","","","")) %>% t() %>% kable(caption = 'Grilla de hiperparámetros para modelos de Bagging',  booktabs = TRUE) %>% 
+  kable_styling(latex_options = "striped", font_size = 8, position = "center")
 ```
 
-La edad a la que una mujer comienza su vida sexual puede variar según una combinación de factores personales, familiares y sociales. Las influencias más comunes incluyen el entorno cultural en el que crece, el acceso a la educación y la información sobre salud sexual, además de las expectativas sociales y familiares. Además, el contexto económico y la disponibilidad de recursos, como servicios de salud accesibles, también pueden tener un impacto.  
+En cuanto a los modelos de *Random Forest* se ajustan los hiperparámetros de cantidad mínimas de observaciones en cada nodo terminal (*min_n*), la cantidad de variables a considerar en cada nodo (*mtry*) y la cantidad de arboles (*trees*). En la siguiente tabla se puede observar la grilla utilizada:
 
-En la @fig-psexo_xpais vemos la proporción de mujeres que comenzaron a tener relaciones sexuales antes y después de los 18 años por país. Lo que más llama la atención es que en los países de Europa como Albania y Armenia casi cuatro quintos de las observaciones comienzan luego de los 18 años, mientras que en el resto de los países esto baja a cerca de un medio del total de observaciones, también mencionar que en Etiopía cerca del 70% del total de observaciones comienzan su vida sexual antes de ésta edad.
+```{r, rf_grid}
+tibble(min_n = c(50,100,150,200,250,300,350,400,450,500,
+                                 1000,1500,2000,2500),
+       trees = c(50,100,500,1000,"","","","","","","","","",""),
+       mtry = c(2,4,6,8,10,"","","","","","","","","")) %>% t() %>% kable(caption = 'Grilla de hiperparámetros para modelos de Random Forest',  booktabs = TRUE) %>% 
+  kable_styling(latex_options = "striped", font_size = 8, position = "center")
+```
 
-[COMENTAR EL ANALISIS EXPLORATORIO] LISTO!
+Para los modelos de *XGBoost* debido a la gran cantidad de hiperparámetros a ajustar se procedió de forma distinta no definiendo una grilla fija. En este caso se utilizara un método de búsqueda que permite evaluar un espacio de hiperparámetros de forma más eficiente, en particular se opto por utilizar *Latin hypercube sampling*, evaluando un total de 60 combinaciones posibles de hiperparámetros.
 
-```{r psexo_xpais}
-#| label: fig-psexo_xpais
-#| fig-cap: "Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país."
+En primer lugar se evaluó posibles rangos validos para algunos de estos hiperparametros. De esto se opto por limitar el rango de algunos de ellos como el *learn_rate* a un rango mas acotado, mientras que a otros simplemente se utilizo los rangos por defecto que vienen en *tidymodels*.
+
+```{r xgb_grid}
+tibble(tree_depth=c(1,15),
+       min_n=c("50","500"),
+       loss_reduction=c("1e-10",31),
+       sample_size=c(0.1,1),
+       mtry=c(1,10),
+       learn_rate=c(0.0016, 0.16)) %>% t() %>% kable(caption = 'Grilla rango hiperparámetros para modelos de XGBoost',  booktabs = TRUE,col.names = c("","Valor min.","Valor max.")) %>% 
+  kable_styling(latex_options = "striped", font_size = 8, position = "center")
+```
+
+
+```{r modelos_phijo, eval=F}
+basic_recipe <- recipe(edad_phijo ~., data=train_phijo) %>%
+                update_role(-all_of(c('edad_phijo',best_vars_phijo)), new_role = "exclude") 
+
+xgb_recipe <- basic_recipe %>%
+  step_dummy(all_nominal_predictors())
+
+bagg_spec <- rand_forest(mtry=.cols(),min_n=tune(),trees=tune()) %>%
+  set_engine('ranger',num.threads=96) %>%
+  set_mode('regression')
+
+bagg_grid <- expand.grid(trees=c(50,100,500,1000),
+                         min_n=c(50,100,150,200,250,300,350,400,450,500,
+                                 1000,1500,2000,2500))
+
+rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees= tune()) %>%
+  set_engine("ranger",num.threads=96) %>%
+  set_mode("regression")
+
+rf_grid <- expand.grid(mtry = c(2,4,6,8,10),
+                       min_n = c(50, 100, 150, 200, 250, 300, 350, 400, 450, 500,1000,1500,2000,2500),
+                       trees = c(50, 100, 500, 1000))
+      
+xgb_spec <- boost_tree(tree_depth = tune(), min_n = tune(),
+                       loss_reduction = tune(),                     
+                       sample_size = tune(), mtry = tune(),      
+                       learn_rate = tune(),    
+                       trees=1000) %>%
+  set_engine("xgboost",nthread=96) %>%
+  set_mode("regression")
+
+xgb_grid <- grid_space_filling(
+  tree_depth(),
+  min_n(range=c(50,500)),
+  loss_reduction(),
+  sample_size = sample_prop(),
+  mtry(range=c(1,10)),
+  learn_rate(range=c(-2.8,-0.8)),
+  size = 60,
+  type="latin_hypercube"
+)
+
+phijo_wf <- workflow_set(preproc=list(basic_rec=basic_recipe,basic_rec=basic_recipe,xgb_rec=xgb_recipe),model=list(bagg=bagg_spec,rf=rf_spec,xgb=xgb_spec),cross=F)  %>%
+  option_add(grid = bagg_grid, control=control_grid(parallel_over = 'everything'),
+             id = "basic_rec_bagg") %>%
+  option_add(grid = rf_grid, control=control_grid(parallel_over = 'everything'),
+             id = "basic_rec_rf") %>%
+  option_add(grid = xgb_grid, control=control_grid(parallel_over = 'everything'),
+             id = "xgb_rec_xgb")
+
+phijo_cv <- vfold_cv(train_phijo, v = 10, strata=pais)
+
+tune_phijo <- phijo_wf %>% workflow_map(resamples =phijo_cv,verbose = T)
+```
+
+```{r tune_phijo}
+load('datos/tune_phijo.RData')
+```
+
+La busqueda se realiza al igual que para el modelo de visualizacion de importancias mediante *10-fold cross-validation*. En la @fig-tune_bagging_phijo y @fig-tune_rf_phijo se puede visualizar los valores de *RMSE* y *RSQ* para los modelos de *Bagging* y *Random Forest* respectivamente. En ambos gráficos parece bastante marcado una mejor *performance* para valores de *min_n* cercano a los $400$, pareciendo la grilla propuesta adecuada para este problema.
+
+```{r tune_bagging_phijo}
+#| label: fig-tune_bagging_phijo
+#| fig-cap: "Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Bagging."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 4
+#| fig-width: 6.4
 
-prop_psexo <- muestra_psexo %>%
-              group_by(pais) %>%
-              summarise(mayor_18 = survey_mean(psexo_18), menor_18 = 1-survey_mean(psexo_18)) %>% select(pais,mayor_18,menor_18)  %>% pivot_longer(cols = c("mayor_18","menor_18"), 
-               names_to = "edad", 
-               values_to = "proporcion")
-  
-prop_psexo %>%
-ggplot(aes(x = pais, y = proporcion, fill=edad)) +
-  geom_bar(stat = "identity", position = "fill") +
-  theme_minimal() + labs(x = 'País', y = '') + scale_fill_viridis_d("Comienzo Relaciones\nSexuales",labels=c("Mayor o igual a 18 años", "Menor a 18 años")) + theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
+autoplot(tune_phijo$result[[1]]) + labs(x="Tamaño mínimo de nodo (min_n)") + theme_minimal() + scale_color_viridis_d(name='Cantidad\nde árboles\n(trees)')
 ```
 
-Como en el caso de la edad al primer hijo, en la $fig-edu_att_cls se observa que a medida que los años de educación aumentan, también lo hace la edad a la que las mujeres comienzan su vida sexual. Este patrón es común en la literatura y está relacionado con una mayor conciencia sobre la salud sexual.
-
-```{r edu_att_clas}
-#| label: fig-edu_att_clas
-#| fig-cap: "Gráfico Densidad, distribución de la edad al primer hijo por Años de Educación de la Madre."
+```{r tune_rf_phijo}
+#| label: fig-tune_rf_phijo
+#| fig-cap: "Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Random Forest."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 4
+#| fig-width: 6.4
 
-muestra_psexo %>% 
-  ggsurvey(aes(x = as.factor(psexo_18), y = anio_educ,fill=as.factor(psexo_18))) + geom_boxplot() +
-  labs(x = "",
-       y = "Años de Educación de la Mujer") +
-  theme_minimal() + scale_fill_viridis_d(name = "Comienzo Relaciones Sexuales",labels=c("Menor a 18 años","Mayor o igual a 18 años"))
+autoplot(tune_phijo$result[[2]]) + labs(x="Tamaño mínimo de nodo (min_n)")  + theme_minimal() + scale_color_viridis_d(name='Cantidad de predictores (mtry)') + theme(legend.position = 'top', axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-[AÑADIR ALGUN GRAFICO EXPLORATORIO MAS]
+## Comparación de modelos
 
-### Selección de covariables relevantes
+[HABLAR QUE EL RESULTADO GENERAL DE TODOS LOS MODELOS PROBADOS ES BASTANTE SIMILAR Y QUE EL RF ES LEVEMENTE MEJOR (CONSIDERANDO QUE TODOS SON MODELOS DE ARBOLES), COMENTAR LA FIGURA]
 
-En este paso, también se utilizó un modelo de Random Forest para evaluar la importancia de las variables en la predicción de la variable psexo_18, que indica si la mujer comienza a tener relaciones sexuales después de los 18 años. Similar al análisis previo, primero se eliminaron algunas variables asociadas al diseño muestral, así como aquellas que no aportan a la interpretación del modelo, como la edad al primer hijo. Además, se filtraron los datos para incluir solo a mujeres con 9 años o más.
+\newpage
 
-Los datos fueron divididos en conjuntos de entrenamiento y testeo, tomando en cuenta los países mediante el argumento strata para garantizar una distribución proporcional. El conjunto de entrenamiento se compuso de 41,945 observaciones, mientras que el de prueba incluyó 7,404.
+```{r comp_modelos_phijo}
+#| label: fig-comp_modelos_phijo
+#| fig-cap: "Gráfico comparación de los modelos de Bagging, Random Forest y XGBoost para predecir la edad al primer hijo."
+#| fig-align: center
+#| fig-height: 3
+#| fig-width: 4
+
+tune_phijo %>% 
+   mutate(wflow_id = c("Bagging", "Random Forest", "XGBoost")) %>%
+autoplot(
+   rank_metric = "rmse",  
+   metric = "rmse",       
+   select_best = TRUE,
+) + theme_minimal() +
+   geom_text(aes(y = mean - 0.11, label = wflow_id),size=3, angle = 90) + lims(y=c(3.4,3.7)) +
+   theme(legend.position = "none") 
+```
+
+## Evaluación modelo final
+
+[HABLAR DEL ANALISIS DE LOS RESIDUOS, MENCIONAR EL PROBLEMA DE LA DIFICULTAD PARA QUE LOS MODELOS PREDIGAN EN RANGOS MAS AMPLIOS DE EDAD (DONDE NO FUNCIONO TRANSFORMAR LA VARIABLE O CONSIDERAR EN EL MUESTREO LA EDAD) POSIBLEMENTE LAS COVARIABLES NO SEAN SUFICIENTES PARA EXPLICAR LA VARIABILIDAD SOBRE TODO DE NACIMIENTOS EN EDADES MAS TARDIAS), A SU VEZ NO SE VE NINGUN PATRON EXTRAÑO EN LOS RESIDUOS NI NINGUN PAIS QUE ESTE ERRANDOLE MAS QUE EL OTRO]
+
+```{r eval_rf_ephijo}
+best_phijo <- tune_phijo  %>% 
+   extract_workflow_set_result("basic_rec_rf") %>% 
+   select_best(metric = "rmse")
+
+# Añadimos que calcule la importancia 
+fit_phijo <- tune_phijo %>% 
+   extract_workflow("basic_rec_rf") %>% update_model(
+  rand_forest(mtry =.cols(), min_n=tune(),  trees=tune()) %>%
+  set_engine('ranger',importance='permutation',num.threads=6) %>% set_mode('regression')
+  ) %>%
+   finalize_workflow(best_phijo) %>% 
+   fit(data = train_phijo)
+
+fit_train_phijo <- augment(fit_phijo,new_data=train_phijo) %>% mutate(residuos = .pred - edad_phijo)
+
+fit_test_phijo <- augment(fit_phijo,new_data=test_phijo)
+```
+
+\newpage
+
+```{r res_modelo_phijo}
+#| label: fig-res_modelo_phijo
+#| fig-cap: "Gráfico residuos vs predichos, conjunto de entrenamiento."
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+fit_train_phijo %>% ggplot(aes(x = .pred, y = residuos,color=pais)) +
+  geom_point(alpha = 0.3) + geom_hline(yintercept = 0, color = "red") +
+  labs(x = "Predicción", y = "Residuos") +
+  theme_minimal()
+```
+
+```{r eval_modelo_phijo}
+#| label: fig-eval_modelo_phijo
+#| fig-cap: "Gráfico predich vs observado, conjunto de testeo."
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+fit_test_phijo %>% ggplot(aes(x = .pred, y = edad_phijo)) +
+  geom_point(alpha = 0.5) +
+  geom_abline(intercept = 0, slope = 1, color = "red") +
+  labs(x = "Predicción", y = "Observado") +
+  theme_minimal()
+```
+
+[HABLAR QUE LOS ERRORES POR PAIS SON BASTANTE SIMILARES, QUE NO HAY UN PAIS QUE SE DESTAQUE POR SU MALA PREDICCION (TABLA ABAJO)]
+
+```{r}
+metricas_reg <- metric_set(rmse,mape)
+fit_test_phijo %>% group_by(pais) %>% metricas_reg(truth = edad_phijo, estimate = .pred) %>%
+  pivot_wider(names_from = .metric, values_from = .estimate) %>% select(pais,rmse,mape) %>% 
+  mutate(across(is.numeric, ~round(.,2))) %>%
+  kable(caption = 'Métricas en el conjunto de testeo para predecir la edad al primer hijo por país',  booktabs = TRUE) %>% 
+  kable_styling(latex_options = "striped", font_size = 8, position = "center")
+```
+
+## Interpretación e importancia de las variables
+
+[COMENTAR TODA LA INTERPRETACION E IMPORTANCIA DE LAS VARIABLES GRAFICOS DE ABAJO]
+
+```{r vip_fit_phijo}
+#| label: fig-vip_fit_phijo
+#| fig-cap: "Gráfico barras, importancia de las variables consideradas en el modelo final."
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+vip(fit_phijo) + labs(x = 'Variable', y = 'Importancia') + theme_minimal()
+```
+```{r}
+explainer_fit_phijo <- explain_tidymodels(
+    model= fit_phijo,
+    data = train_phijo,
+    y = train_phijo$edad_phijo,
+    label = "Modelo edad al primer hijo",
+    verbose = FALSE
+  )
+```
+
+```{r}
+pdp_educ <- model_profile(explainer_fit_phijo, N = 1000, variables = "anio_educ")
+
+pdp_pais <- model_profile(explainer_fit_phijo, N = 1000, variables = "pais")
+```
+
+[PROBAR SI SE PUEEDE A GEOM_RUG PONERLE UN JITTER]
+
+```{r pdp_educ}
+#| label: fig-pdp_educ
+#| fig-cap: "Gráfico PDP, efecto de los años de educación en la edad al primer hijo."
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+plot(pdp_educ) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Años de Educación', y='Edad Media al Primer Hijo')
+```
+```{r pdp_pais}
+#| label: fig-pdp_pais
+#| fig-cap: "Gráfico PDP, efecto del país en la edad al primer hijo."
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+plot(pdp_pais)  + theme_minimal() + labs(title='',subtitle='',x='País', y='Edad Media al Primer Hijo') + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + lims(y=c(0,25))
+```
+
+# Modelado de la edad a la primera relación sexual
+
+Se procede a realizar el modelado de la edad a la primera relación sexual donde el procedimiento a realizar es muy similar al anterior. En primer lugar se realiza un filtrado de los datos, donde nuevamente se trabajara con observaciones que dispongan de todos los datos necesarios para el modelo. En este caso la variable de interes no esta presente con lo cual se debe construir a partir de la variable *edad_psexo*. 
+
+Como se visualizo en el analisis exploratorio la proporcion de mujeres que comienzan a tener relaciones sexuales antes de los 18 años en algunos paises es bastante mas baja. Con lo cual se decide crear otra variable que combine el pais y la variable de interes, para que en el proceso de division de los datos o el remuestreo no haya un desbalance.
+
+Previo a la división de los datos se procede por filtrar observaciones con valores extremadamente atípicos o que podrian carecer de sentido, en este caso se toma como limite inferior de la edad a la primera relación sexual los 9 años.
+Con lo que se cuentan con 49349 observaciones donde nuevamente se utilizara un 85% de los datos para entrenar y el 15% restante para evaluar los modelos considerados. 
 
 ```{r split_psexo}
 datos_psexo <- datos_dhs %>% select(-id,-psu,-estrato,-anio,-ponderador,-edad,-edad_phijo) %>%
    filter(edad_psexo >= 9) %>% na.omit() %>%
    mutate(psexo_18 = as.factor(ifelse(edad_psexo >= 18, 1, 0))) %>%
+  mutate(pais_psexo_18 = as.factor(paste(pais,psexo_18,sep='_'))) %>%
   select(-edad_psexo) %>%
-  initial_split(strata=pais,prop=0.85)
+  initial_split(strata=pais_psexo_18,prop=0.85)
 
 train_psexo <- training(datos_psexo)
 test_psexo <- testing(datos_psexo)
 ```
 
-Para optimizar el modelo, se empleó la técnica de validación cruzada con 10 folds devuelta, ajustando los hiperparámetros clave como el número mínimo de observaciones por nodo y el número de predictores aleatorios seleccionados en cada división. Al igual que lo realizado en el análisis anterior, se mantuvo una grilla de búsqueda sencilla, y se optó por usar 1000 árboles.
+## Selección de covariables relevantes
+
+Nuevamente al igual que en el caso anterior existen potencialmente variables irrelevantes para el problema, con lo cual se decide realizar nuevamente un modelo de *Random Forest* y visualizar la importancia de las variables. El procedimiento utilizado es el mismo que en el caso anterior, donde se prueba una grilla de 30 combinaciones para (*mtry*) y (*min_n*), seleccionando el mejor modelo en este caso al estar trabajado en un proble de clasificacion en base a la métrica de area bajo la curva *ROC* (*roc_auc*).
 
 ```{r tune vip_psexo, eval=F}
 vip_psexo_spec <- rand_forest(mtry=tune(), min_n=tune(), trees=1000) %>%
@@ -512,108 +800,154 @@ load('datos/imp_psexo.RData')
 imp_psexo <- vip(vip_psexo_fit,num_features=19)
 ```
 
-En la @fig-vip_psexo se presenta un gráfico de barras que muestra la importancia de las variables utilizadas en el modelo, ordenadas de mayor a menor. A partir de esta evaluación, se seleccionaron las 10 variables más relevantes para continuar con el análisis. Estas variables son: anio_educ, pais, indice_riqueza, n_parejas, anio_educ_par, cant_uniones, hogar_tv, cat_riqueza, noticias y hogar_elect.
-
-[HABLAR UN POCO DE LAS VARIABLES QUE QUEDAN, MENCIONAR QUE SE TOMAN LAS MAS IMPORTANTES] LISTO!
+[HABLAR UN POCO DE LAS VARIABLES QUE QUEDAN, MENCIONAR QUE SON PARECIDAS A LAS DEL OTRO MODELO]
 
 ```{r vip_psexo}
 #| label: fig-vip_psexo
 #| fig-cap: "Gráfico barras, importancia de las variables consideradas en el modelo de Random Forest mediante permutación para predecir si comienza a tener relaciones luego de los 18 años."
 #| fig-align: center
-#| fig-height: 5
-#| fig-width: 8
+#| fig-height: 4
+#| fig-width: 6.4
 
 imp_psexo + labs(x = 'Variable', y = 'Importancia') + theme_minimal()
 ```
 
-```{r best_vars_phijo}
+```{r best_vars_psexo}
 best_vars_psexo <- imp_psexo$data %>% slice_max(order_by = Importance, n=10) %>% pull(Variable)
 ```
 
-# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros 
 
-Una vez visualizados los datos y posibles relaciones en las variables se procede a armar los modelos. 
+```{r modelos_psexo, eval=F}
+psexo_recipe <- recipe(psexo_18 ~., data=train_psexo) %>%
+                update_role(-all_of(c('psexo_18',best_vars_psexo)), new_role = "exclude") 
 
-Para incorporar información sobre el contexto social y económico se toman en cuenta estas 5 variables, algunas de ellas hemos visualizado su efecto, siendo este relevante:
-
-- País de procedencia de la mujer.
-- Indice de riqueza del hogar.
-- Si el hogar dispone de televisión.
-- Si la mujer se encuentra en una área urbana o rural.
-- Si la mujer trabaja en la actualidad.
-
-Por lado del nivel educativo de la mujer se toman en cuenta las siguientes variables:
-
-- Años de educación de la mujer.
-- Si la mujer lee periódicos, revistas o libros.
-
-Por último, se consideran las siguientes variables relacionadas con el comportamiento sexual de la mujer:
-
-- Cantidad de parejas sexuales que ha tenido la mujer.
-- Si la mujer conoce algún método anticonceptivo.
-
-En esta primera aproximación al problema se opta por solamente tomar las observaciones que dispongan de todos los datos necesarios para el modelo, no realizándose imputaciones de datos faltantes o análisis de la no respuesta a la encuesta. 
-
-En total se entrena al modelo con 80,359 observaciones de mujeres donde se utilizara un 85% de los datos para entrenar y el 15% restante para evaluar el modelo.
-
-En este caso se trabaja integramente con 'tidymodels' framework que permite realizar la evaluación de los modelos de manera sencilla. Se opta por evaluar la eficiencia de modelos basados en árboles: Bagging, Random Forest y XGBoost, donde para cada uno se realiza su correspondiente tuneo de hiperparámetros.
-
-```{r modelos_phijo, eval=F}
-basic_recipe <- recipe(edad_phijo ~., data=train_phijo) %>%
-                update_role(-all_of(c('edad_phijo',best_vars_phijo)), new_role = "exclude") 
-
-xgb_recipe <- basic_recipe %>%
-  step_dummy(all_nominal_predictors())
+log_spec <- logistic_reg() %>%
+  set_engine('glm', family = binomial) %>%
+  set_mode('classification')
 
 bagg_spec <- rand_forest(mtry=.cols(),min_n=tune(),trees=tune()) %>%
-  set_engine('ranger', num.threads=48) %>%
-  set_mode('regression')
+  set_engine('ranger',num.threads=96) %>%
+  set_mode('classification')
 
-bagg_grid <- expand.grid(trees=c(25,50,100,500,1000),
+bagg_grid <- expand.grid(trees=c(50,100,500,1000),
                          min_n=c(50,100,150,200,250,300,350,400,450,500,
-                           1000,1500,2000,2500))
+                                 1000,1500,2000,2500))
 
 rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees= tune()) %>%
-  set_engine("ranger", num.threads = 48) %>%
-  set_mode("regression")
+  set_engine("ranger",num.threads=96) %>%
+  set_mode('classification')
 
 rf_grid <- expand.grid(mtry = c(2,4,6,8,10),
                        min_n = c(50, 100, 150, 200, 250, 300, 350, 400, 450, 500,1000,1500,2000,2500),
-                       trees = c(25, 50, 100, 500, 1000))
+                       trees = c(50, 100, 500, 1000))
 
-xgb_spec <- boost_tree(tree_depth = tune(), learn_rate = tune(), min_n = tune(), trees=500) %>%
-  set_engine("xgboost") %>%
-  set_mode("regression")
+psexo_wf <- workflow_set(preproc=list(psexo_recipe=psexo),model=list(log=log_spec,bagg=bagg_spec,rf=rf_spec))  %>%
+  option_add(grid = bagg_grid, control=control_grid(parallel_over = 'everything'),
+             id = "psexo_recipe_bagg") %>%
+  option_add(grid = rf_grid, control=control_grid(parallel_over = 'everything'),
+             id = "psexo_recipe_rf") 
 
-xgb_grid <- expand.grid(tree_depth = c(2, 4, 6, 8, 10),
-                        learn_rate = c(0.01, 0.025, 0.05, 0.1, 0.2),
-                        min_n = c(50, 100, 200, 300, 400, 500, 1000, 2000))
+psexo_cv <- vfold_cv(train_psexo, v = 10, strata=pais_psexo_18)
 
-phijo_wf <- workflow_set(preproc=list(basic_rec=basic_recipe,basic_rec=basic_recipe,xgb_rec=xgb_recipe),model=list(bagg=bagg_spec,rf=rf_spec,xgb=xgb_spec),cross=F)  %>%
-  option_add(grid = bagg_grid, id = "basic_rec_bagg") %>%
-  option_add(grid = rf_grid, id = "basic_rec_rf") %>%
-  option_add(grid = xgb_grid, id = "xgb_rec_xgb")
-
-phijo_cv <- vfold_cv(train_phijo, v = 10)
-
-tune_phijo <- phijo_wf %>% workflow_map(resamples =phijo_cv)
+tune_psexo <- psexo_wf %>% workflow_map(resamples =psexo_cv,verbose = T)
 ```
 
-## Búsqueda de Hiperparámetros 
+```{r tune_psexo}
+load('datos/tune_psexo.RData')
+```
+
+```{r tune_bagging_psexo}
+#| label: fig-tune_bagging_psexo
+#| fig-cap: "Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Bagging."
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+autoplot(tune_psexo$result[[2]]) + labs(x="Tamaño mínimo de nodo (min_n)") + theme_minimal() + scale_color_viridis_d(name='Cantidad\nde árboles\n(trees)')
+```
+```{r tune_rf_psexo}
+#| label: fig-tune_rf_psexo
+#| fig-cap: "Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Random Forest."
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+autoplot(tune_psexo$result[[3]]) + labs(x="Tamaño mínimo de nodo (min_n)")  + theme_minimal() + scale_color_viridis_d(name='Cantidad de predictores (mtry)') + theme(legend.position = 'top')
+```
 
 ## Comparación de modelos
+```{r}
+tune_psexo <- tune_psexo %>% 
+   mutate(wflow_id = c("Logistico", "Bagging", "Random Forest")) 
+```
+
+```{r comp_modelos_psexo}
+#| label: fig-comp_modelos_psexo
+#| fig-cap: "Gráfico comparación de los modelos de Bagging, Random Forest y Regresión Logística, mediante validación cruzada."
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+tune_psexo %>%
+autoplot(
+   rank_metric = "roc_auc",  
+   metric = "roc_auc",       
+   select_best = TRUE,
+) + theme_minimal() +
+   geom_text(aes(y = mean - 0.015, label = wflow_id),size=5, angle = 90) + lims(y=c(0.73,0.78)) + labs(x='Ranking',y='Área bajo la curva ROC') +
+   theme(legend.position = "none") 
+```
+
+```{r}
+best_roc <- tune_psexo$wflow_id %>%
+  purrr::map(function(id) {     
+  result <- extract_workflow_set_result(tune_psexo, id = id)
+  best_params <- select_best(result, metric="roc_auc")
+  wflow <- extract_workflow(tune_psexo, id = id)
+  best_wf <- finalize_workflow(wflow, best_params)
+  fit <- fit(best_wf, data = train_psexo)
+  augment(fit, new_data = test_psexo) %>%
+    roc_curve(truth = psexo_18,.pred_1, event_level = "second") %>%
+    mutate(modelo = id)
+  })
+```
+
+
+```{r comp_roc_psexo}
+#| label: fig-comp_roc_psexo
+#| fig-cap: "Gráfico, comparación curvas ROC para los modelos considerados en el conjunto de testeo"
+#| fig-align: center
+#| fig-height: 4
+#| fig-width: 6.4
+
+autoplot(bind_rows(best_roc)) + aes(color = modelo) + labs(x='1 - Especificidad', y='Sensibilidad') + theme_minimal() + scale_color_discrete(name='Modelo')
+```
+
 
 ## Evalación modelo final
 
-## Interpretación e importancia de las variables
+```{r eval_rf_epsexo}
+best_psexo <- tune_psexo  %>% 
+   extract_workflow_set_result("Random Forest") %>% 
+   select_best(metric = "roc_auc")
 
-# Modelado de la edad a la primera relación sexual
+# Añadimos que calcule la importancia 
+fit_psexo <- tune_psexo %>% 
+   extract_workflow("Random Forest") %>% update_model(
+  rand_forest(mtry =.cols(), min_n=tune(),  trees=tune()) %>%
+  set_engine('ranger',importance='permutation',num.threads=6) %>% set_mode('classification')
+  ) %>%
+   finalize_workflow(best_psexo) %>% 
+   fit(data = train_psexo)
 
-## Búsqueda de Hiperparámetros 
+fit_test_psexo <- augment(fit_psexo,new_data=test_psexo)
+```
 
-## Comparación de modelos
-
-## Evalación modelo final
+```{r}
+fit_test_psexo %>% 
+  conf_mat(truth = psexo_18, estimate = .pred_class) %>% autoplot()
+```
 
 ## Interpretación e importancia de las variables
 
