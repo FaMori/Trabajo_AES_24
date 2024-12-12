@@ -340,6 +340,8 @@ muestra_phijo %>%
   theme(legend.position = 'top',axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
+\newpage
+
 ### Primera relación sexual
 
 La edad en que las mujeres comienzan a tener relaciones sexuales marca el inicio del riesgo a concebir y por tanto la misma esta fuertemente relacionada con la edad al primer hijo. Gran parte de las variables comportamentales, económicas, educativas de la mujer que se observaron en la edad al primer hijo, también son relevantes para la edad al primer acto sexual. En este caso se trabajará con la variable si la mujer comienza su vida sexual antes o después de los 18 años.
@@ -374,8 +376,6 @@ ggplot(aes(x = pais, y = proporcion, fill=edad)) +
 
 Al igual que en el caso de la edad al primer hijo, la educación de la mujer deberia ser un factor muy relevante para esta variable de interes. En la @fig-edu_att_clas se observa la distribución de los años de educación de la mujer por si comienzan a tener relaciones sexuales antes o después de los 18 años. En este caso, se observa que las mujeres que comienzan a tener relaciones sexuales después de los 18 años tienden a tener mas años de educación con una gran concentracion en los 10 años de educacion, mientras que las que comienzan antes de los 18 años tienden a situarse entre los 0 a 10 años de educación.
 
-\newpage
-
 ```{r edu_att_clas}
 #| label: fig-edu_att_clas
 #| fig-cap: "Gráfico de caja, distribución de años de educación de la mujer por comienzo de relaciones sexuales."
@@ -390,8 +390,109 @@ muestra_psexo %>%
   theme_minimal() + scale_fill_viridis_d(name = "Comienzo Relaciones Sexuales",labels=c("Menor a 18 años","Mayor o igual a 18 años"))
 ```
 
+En la @fig-psexo_xcat_riqueza, podemos ver que la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años es más alta en las categorías socioeconómicas más bajas. Esto puede estar relacionado con un mayor acceso a información sobre salud sexual, por ejemplo. En los hogares categorizados como más pobres vemos una proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años de 0.56, mientras que en los hogares contrarios, es decir los más ricos, esta proporción es de 0.36.  
 
-[AÑADIR ALGUN GRAFICO EXPLORATORIO MAS (VER IMPORTANCIAS)]
+```{r psexo_xcat_riqueza}
+#| label: fig-psexo_xcat_riqueza
+#| fig-cap: "Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por categría de riqueza."
+#| fig-align: center
+#| fig-height: 3.5
+#| fig-width: 5
+
+prop_cat_riqueza <- muestra_psexo %>%
+    group_by(cat_riqueza) %>%
+    summarise(mayor_18 = survey_mean(psexo_18), menor_18 = 1-survey_mean(psexo_18)) %>%
+    select(cat_riqueza,mayor_18,menor_18) %>%
+    pivot_longer(cols = c("mayor_18","menor_18"),                                                                                     names_to = "edad",                                                                                          values_to = "proporcion") %>% 
+    mutate(cat_riqueza = factor(cat_riqueza, levels = c("Más Pobre", "Pobre", "Medio", "Rico", "Más Rico")))
+
+prop_cat_riqueza %>%
+    ggplot(aes(x = cat_riqueza, y = proporcion, fill = edad)) +
+    geom_bar(stat = "identity", position = "fill") +
+    theme_minimal() +
+    labs(x = 'Categoría de Riqueza', y = '') +
+    scale_fill_viridis_d(name = "Comienzo Relaciones\nSexuales",
+                         labels = c("Mayor o igual a 18 años", "Menor a 18 años")) +
+    theme(legend.position = 'top', axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+[OTROS POSIBLES GRAFICOS (ELEGIR SI DEJR O SACAR)]
+
+```{r psexo_xind_riqueza}
+#| label: fig-psexo_xind_riqueza
+#| fig-cap: "Gráfico de caja, distribución del índice de riqueza de la mujer por comienzo de relaciones sexuales."
+#| fig-align: center
+#| fig-height: 3.5
+#| fig-width: 5
+
+muestra_psexo %>%
+    ggsurvey(aes(x = as.factor(psexo_18), y = indice_riqueza, fill = as.factor(psexo_18))) +
+    geom_boxplot(color = "grey") +
+    labs(x = "",
+         y = "Índice de Riqueza") +
+    theme_minimal() +
+    scale_fill_viridis_d(name = "Comienzo Relaciones Sexuales",
+                         labels = c("Menor a 18 años", "Mayor o igual a 18 años"))
+
+```
+
+```{r psexo_xtv}
+#| label: fig-psexo_xtv
+#| fig-cap: "Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por si poseen o no un televisor en su hogar."
+#| fig-align: center
+#| fig-height: 3.5
+#| fig-width: 5
+
+prop_hogar_tv <- muestra_psexo %>%
+    group_by(hogar_tv) %>%
+    summarise(mayor_18 = survey_mean(psexo_18), menor_18 = 1-survey_mean(psexo_18)) %>%
+    select(hogar_tv,mayor_18,menor_18) %>%
+    pivot_longer(cols = c("mayor_18","menor_18"),                                                                                     names_to = "edad",                                                                                         values_to = "proporcion")
+
+prop_hogar_tv %>%
+    ggplot(aes(x = hogar_tv, y = proporcion, fill = edad)) +
+    geom_bar(stat = "identity", position = "fill") +
+    theme_minimal() +
+    labs(x = '¿Hogar con TV?', y = '') +
+    scale_fill_viridis_d(name = "Comienzo Relaciones Sexuales",
+                         labels = c("Mayor o igual a 18 años", "Menor a 18 años")) +
+    theme(legend.position = 'top')
+
+```
+
+```{r psexo_xn_parejas}
+#| label: fig-psexo_xn_parejas
+#| fig-cap: "Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por la cantidad de parejas que han tenido."
+#| fig-align: center
+#| fig-height: 3.5
+#| fig-width: 5
+
+prop_n_parejas_tv <- muestra_psexo  %>%
+    mutate(n_parejas_rango = case_when(
+        n_parejas == 1 ~ "1",
+        n_parejas >= 2 & n_parejas <= 5 ~ "2-5",
+        n_parejas >= 6 & n_parejas <= 10 ~ "6-10",
+        n_parejas >= 11 & n_parejas <= 20 ~ "11-20",
+        n_parejas > 20 ~ "Más de 20"
+    )) %>%
+    group_by(n_parejas_rango) %>%
+    summarise(mayor_18 = survey_mean(psexo_18), menor_18 = 1 - survey_mean(psexo_18)) %>%
+    select(n_parejas_rango, mayor_18, menor_18) %>%
+    pivot_longer(cols = c("mayor_18", "menor_18"),
+                 names_to = "edad",
+                 values_to = "proporcion") %>% 
+    mutate(n_parejas_rango = factor(n_parejas_rango, levels = c("1", "2-5", "6-10", "11-20", "Más de 20")))
+
+prop_n_parejas_tv %>%
+    ggplot(aes(x = n_parejas_rango, y = proporcion, fill = edad)) +
+    geom_bar(stat = "identity", position = "fill") +
+    theme_minimal() +
+    labs(x = 'Número de Parejas', y = '') +
+    scale_fill_viridis_d(name = "Comienzo Relaciones Sexuales",
+                         labels = c("Mayor o igual a 18 años", "Menor a 18 años")) +
+    theme(legend.position = 'top')
+```
 
 
 \vspace{10cm}
@@ -707,6 +808,7 @@ fit_test_phijo %>% group_by(pais) %>% metricas_reg(truth = edad_phijo, estimate 
 
 vip(fit_phijo) + labs(x = 'Variable', y = 'Importancia') + theme_minimal()
 ```
+
 ```{r}
 explainer_fit_phijo <- explain_tidymodels(
     model= fit_phijo,
@@ -734,6 +836,7 @@ pdp_pais <- model_profile(explainer_fit_phijo, N = 1000, variables = "pais")
 
 plot(pdp_educ) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Años de Educación', y='Edad Media al Primer Hijo')
 ```
+
 ```{r pdp_pais}
 #| label: fig-pdp_pais
 #| fig-cap: "Gráfico PDP, efecto del país en la edad al primer hijo."
@@ -800,7 +903,7 @@ load('datos/imp_psexo.RData')
 imp_psexo <- vip(vip_psexo_fit,num_features=19)
 ```
 
-[HABLAR UN POCO DE LAS VARIABLES QUE QUEDAN, MENCIONAR QUE SON PARECIDAS A LAS DEL OTRO MODELO]
+En la @fig-vip_psexo se observa la importancia de las variables consideradas en el modelo seleccionado. Al igual qque en la @fig-vip_phijo, variables relacionadas con la educación o riqueza del hogar tienden a tener mayor importancia. De todas formas existen algunas diferencias sobre todo en el orden de importancia, aquí vemos que la cantidad de parejas de la mujer parecería incidir más en la edad a la que comienzan a tener relaciones sexuales. Además cabe destacar el aumento de importancia en este caso de la frecuencia con la que la mujer ve noticias, esta información suele ser de interés en este tipo de estudios.  
 
 ```{r vip_psexo}
 #| label: fig-vip_psexo
@@ -812,9 +915,26 @@ imp_psexo <- vip(vip_psexo_fit,num_features=19)
 imp_psexo + labs(x = 'Variable', y = 'Importancia') + theme_minimal()
 ```
 
+Una vez visualizados los datos y posibles relaciones en las variables se procede a armar los modelos. De lo visto mediante el modelo de *Random Forest* se seleccionan las *10* variables que más importancia presentaron para clasificar si una mujer comienza su vida sexual antes o después de los 18 años.
+
 ```{r best_vars_psexo}
 best_vars_psexo <- imp_psexo$data %>% slice_max(order_by = Importance, n=10) %>% pull(Variable)
 ```
+
+En este caso las variables que quedaron seleccionadas son:
+    
+1. Años de educación de la mujer.
+2. País de procedencia de la mujer.
+3. Indice de riqueza del hogar.
+4. Numero de parejas sexuales que ha tenido la mujer.
+5. Años de educación de la pareja de la mujer.
+6. Cantidad de uniones que ha tenido la mujer.
+7. Si el hogar dispone de televisión.
+8. Categoría de riqueza del hogar.
+9. La frecuencia con la que la mujer ve noticias.
+10. Si el hogar tiene acceso a electricidad.
+
+En esta instancia se vuelve a trabajar integramente con '*tidymodels*', pero en este caso se opta por evaluar la eficiencia de modelos basados en árboles: *Bagging*, *Random Forest* y además se ajusta un modelo *Logístico*, nuevamente para los modelos basados en árboles se realiza un tuneo de hiperparámetros.
 
 ## Búsqueda de Hiperparámetros 
 
@@ -866,6 +986,7 @@ load('datos/tune_psexo.RData')
 
 autoplot(tune_psexo$result[[2]]) + labs(x="Tamaño mínimo de nodo (min_n)") + theme_minimal() + scale_color_viridis_d(name='Cantidad\nde árboles\n(trees)')
 ```
+
 ```{r tune_rf_psexo}
 #| label: fig-tune_rf_psexo
 #| fig-cap: "Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Random Forest."
@@ -877,6 +998,7 @@ autoplot(tune_psexo$result[[3]]) + labs(x="Tamaño mínimo de nodo (min_n)")  + 
 ```
 
 ## Comparación de modelos
+
 ```{r}
 tune_psexo <- tune_psexo %>% 
    mutate(wflow_id = c("Logistico", "Bagging", "Random Forest")) 
