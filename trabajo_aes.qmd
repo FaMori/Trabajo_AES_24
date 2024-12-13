@@ -710,7 +710,7 @@ autoplot(tune_phijo$result[[2]]) + labs(x="Tamaño mínimo de nodo (min_n)")  + 
 
 ## Comparación de modelos
 
-[HABLAR QUE EL RESULTADO GENERAL DE TODOS LOS MODELOS PROBADOS ES BASTANTE SIMILAR Y QUE EL RF ES LEVEMENTE MEJOR (CONSIDERANDO QUE TODOS SON MODELOS DE ARBOLES), COMENTAR LA FIGURA]
+Para comparar los modelos obtenidos, se realizó una comparación entre la métrica RMSE (Raíz del Error Cuadrático Medio) de cada uno. Esta medida representa la raíz cuadrada de la media de la diferencia entre los valores predichos y los observados al cuadrado. Mientras más bajo sea este valor, significa que menor es el error de estimación del modelo; entonces, al comparar los tres modelos realizados, se puede elegir cuál es el mejor para estimar, teniendo en cuenta esta métrica. En este caso, el modelo ajustado por el método de Random Forest es el que tiene un valor más bajo del RMSE, aunque los tres valores son muy cercanos entre sí, por lo cual sugiere que el rendimiento de los modelos es muy similar. Esto se puede deber a que los tres son basados en árboles, entonces, por más que haya diferencias en la metodología, a grandes rasgos deberían predecir de forma similar.
 
 \newpage
 
@@ -734,7 +734,7 @@ autoplot(
 
 ## Evaluación modelo final
 
-[HABLAR DEL ANALISIS DE LOS RESIDUOS, MENCIONAR EL PROBLEMA DE LA DIFICULTAD PARA QUE LOS MODELOS PREDIGAN EN RANGOS MAS AMPLIOS DE EDAD (DONDE NO FUNCIONO TRANSFORMAR LA VARIABLE O CONSIDERAR EN EL MUESTREO LA EDAD) POSIBLEMENTE LAS COVARIABLES NO SEAN SUFICIENTES PARA EXPLICAR LA VARIABILIDAD SOBRE TODO DE NACIMIENTOS EN EDADES MAS TARDIAS), A SU VEZ NO SE VE NINGUN PATRON EXTRAÑO EN LOS RESIDUOS NI NINGUN PAIS QUE ESTE ERRANDOLE MAS QUE EL OTRO]
+Una vez realizada la comparación de los modelos, y decidiéndose por el modelo realizado mediante el método de Random Forest, se procede a evaluar este modelo como modelo final.
 
 ```{r eval_rf_ephijo}
 best_phijo <- tune_phijo  %>% 
@@ -756,6 +756,8 @@ fit_test_phijo <- augment(fit_phijo,new_data=test_phijo)
 ```
 
 \newpage
+El primer paso a realizar es el análisis de los residuos. Se obtuvo un gráfico de puntos que compara el valor predicho por el modelo para cada individuo en el eje horizontal y el residuo, que es el valor verdaderamente observado menos el predicho, en el eje vertical. En el gráfico se puede observar cómo los puntos son bastante simétricos alrededor del cero, lo cual nos da un indicio de que el modelo no estaría sesgado. Tampoco se observa un patrón en la nube de puntos que indique que el modelo no haya ajustado correctamente. Lo que sí se puede observar es la aparición de algunos valores atípicos de los residuos en la parte negativa del gráfico. Esto indica que, para los valores observados más altos, en los que una mujer tuvo un hijo, el modelo no logra estimar bien la edad a la que esa mujer realmente tuvo su primer hijo. Esto se puede corroborar observando que en el eje horizontal solo tenemos valores predichos menores a 30 años, mientras que en la base de datos sí existen mujeres que hayan tenido hijos luego de esa edad. Se intentó ajustar el modelo realizando transformaciones y teniendo en cuenta el muestreo en la edad, pero no tuvimos éxito en lograr que el modelo capte mejor a esas mujeres. Tal vez las covariables que están en el modelo no sean suficientemente relevantes para explicar este fenómeno.
+Otro punto a considerar es que, observando los puntos segmentados por país, todos presentan aproximadamente el mismo comportamiento, lo cual lleva a considerar que el modelo predice de buena manera en todos ellos.
 
 ```{r res_modelo_phijo}
 #| label: fig-res_modelo_phijo
@@ -770,6 +772,8 @@ fit_train_phijo %>% ggplot(aes(x = .pred, y = residuos,color=pais)) +
   theme_minimal()
 ```
 
+Luego se realizó el siguiente gráfico para el conjunto de datos de testeo, en donde se observa en el eje horizontal el valor predicho de la edad de la mujer a la hora de tener su primer hijo, y en el eje vertical el valor real. Se pueden considerar los mismos puntos que el gráfico anterior, lo que indica que no existe un sobreajuste hacia el subconjunto de datos de entrenamiento. También, de igual manera que en el anterior gráfico, el modelo no logra predecir bien la edad de las mujeres que tuvieron su primer hijo después de los 30 años.
+
 ```{r eval_modelo_phijo}
 #| label: fig-eval_modelo_phijo
 #| fig-cap: "Gráfico predich vs observado, conjunto de testeo."
@@ -783,9 +787,7 @@ fit_test_phijo %>% ggplot(aes(x = .pred, y = edad_phijo)) +
   labs(x = "Predicción", y = "Observado") +
   theme_minimal()
 ```
-
-[HABLAR QUE LOS ERRORES POR PAIS SON BASTANTE SIMILARES, QUE NO HAY UN PAIS QUE SE DESTAQUE POR SU MALA PREDICCION (TABLA ABAJO)]
-
+En la siguiente tabla se puede observar cómo el RMSE del modelo para cada país es muy similar al resto, lo cual confirma el punto observado en el gráfico anterior. La variable MAPE (Mean Absolute Percentage Error) indica la media del error porcentual de todas las observaciones de cada país. Los valores de esta métrica son muy parecidos para todos los países, y no indican que ningún país prediga muy mal la edad que tiene una mujer cuando tiene su primer hijo.
 ```{r}
 metricas_reg <- metric_set(rmse,mape)
 fit_test_phijo %>% group_by(pais) %>% metricas_reg(truth = edad_phijo, estimate = .pred) %>%
@@ -797,7 +799,8 @@ fit_test_phijo %>% group_by(pais) %>% metricas_reg(truth = edad_phijo, estimate 
 
 ## Interpretación e importancia de las variables
 
-[COMENTAR TODA LA INTERPRETACION E IMPORTANCIA DE LAS VARIABLES GRAFICOS DE ABAJO]
+[COMENTAR TODA LA INTERPRETACION E IMPORTANCIA DE LAS VARIABLES
+GRAFICOS DE ABAJO]
 
 ```{r vip_fit_phijo}
 #| label: fig-vip_fit_phijo
