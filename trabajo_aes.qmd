@@ -756,7 +756,7 @@ fit_test_phijo <- augment(fit_phijo,new_data=test_phijo)
 ```
 
 \newpage
-El primer paso a realizar es el análisis de los residuos. Se obtuvo un gráfico de puntos que compara el valor predicho por el modelo para cada individuo en el eje horizontal y el residuo, que es el valor verdaderamente observado menos el predicho, en el eje vertical. En el gráfico se puede observar cómo los puntos son bastante simétricos alrededor del cero, lo cual nos da un indicio de que el modelo no estaría sesgado. Tampoco se observa un patrón en la nube de puntos que indique que el modelo no haya ajustado correctamente. Lo que sí se puede observar es la aparición de algunos valores atípicos de los residuos en la parte negativa del gráfico. Esto indica que, para los valores observados más altos, en los que una mujer tuvo un hijo, el modelo no logra estimar bien la edad a la que esa mujer realmente tuvo su primer hijo. Esto se puede corroborar observando que en el eje horizontal solo tenemos valores predichos menores a 30 años, mientras que en la base de datos sí existen mujeres que hayan tenido hijos luego de esa edad. Se intentó ajustar el modelo realizando transformaciones y teniendo en cuenta el muestreo en la edad, pero no tuvimos éxito en lograr que el modelo capte mejor a esas mujeres. Tal vez las covariables que están en el modelo no sean suficientemente relevantes para explicar este fenómeno.
+El primer paso a realizar es el análisis de los residuos. Se obtuvo la @fig-res_modelo_phijo que compara el valor predicho por el modelo para cada individuo en el eje horizontal y el residuo, que es el valor verdaderamente observado menos el predicho, en el eje vertical. En el gráfico se puede observar cómo los puntos son bastante simétricos alrededor del cero, lo cual nos da un indicio de que el modelo no estaría sesgado. Tampoco se observa un patrón en la nube de puntos que indique que el modelo no haya ajustado correctamente. Lo que sí se puede observar es la aparición de algunos valores atípicos de los residuos en la parte negativa del gráfico. Esto indica que, para los valores observados más altos, en los que una mujer tuvo un hijo, el modelo no logra estimar bien la edad a la que esa mujer realmente tuvo su primer hijo. Esto se puede corroborar observando que en el eje horizontal solo tenemos valores predichos menores a 30 años, mientras que en la base de datos sí existen mujeres que hayan tenido hijos luego de esa edad. Se intentó ajustar el modelo realizando transformaciones y teniendo en cuenta el muestreo en la edad, pero no tuvimos éxito en lograr que el modelo capte mejor a esas mujeres. Tal vez las covariables que están en el modelo no sean suficientemente relevantes para explicar este fenómeno.
 Otro punto a considerar es que, observando los puntos segmentados por país, todos presentan aproximadamente el mismo comportamiento, lo cual lleva a considerar que el modelo predice de buena manera en todos ellos.
 
 ```{r res_modelo_phijo}
@@ -772,7 +772,7 @@ fit_train_phijo %>% ggplot(aes(x = .pred, y = residuos,color=pais)) +
   theme_minimal()
 ```
 
-Luego se realizó el siguiente gráfico para el conjunto de datos de testeo, en donde se observa en el eje horizontal el valor predicho de la edad de la mujer a la hora de tener su primer hijo, y en el eje vertical el valor real. Se pueden considerar los mismos puntos que el gráfico anterior, lo que indica que no existe un sobreajuste hacia el subconjunto de datos de entrenamiento. También, de igual manera que en el anterior gráfico, el modelo no logra predecir bien la edad de las mujeres que tuvieron su primer hijo después de los 30 años.
+Luego se realizó la @fig-eval_modelo_phijo para el conjunto de datos de testeo, en donde se observa en el eje horizontal el valor predicho de la edad de la mujer a la hora de tener su primer hijo, y en el eje vertical el valor real. Se pueden considerar los mismos puntos que el gráfico anterior, lo que indica que no existe un sobreajuste hacia el subconjunto de datos de entrenamiento. También, de igual manera que en el anterior gráfico, el modelo no logra predecir bien la edad de las mujeres que tuvieron su primer hijo después de los 30 años.
 
 ```{r eval_modelo_phijo}
 #| label: fig-eval_modelo_phijo
@@ -799,8 +799,7 @@ fit_test_phijo %>% group_by(pais) %>% metricas_reg(truth = edad_phijo, estimate 
 
 ## Interpretación e importancia de las variables
 
-[COMENTAR TODA LA INTERPRETACION E IMPORTANCIA DE LAS VARIABLES
-GRAFICOS DE ABAJO]
+Lo primero a destacar es que la @fig-vip_fit_phijo, se obtuvieron resultados muy similares a los obtenidos en la @fig-vip_phijo y el análisis exploratorio, siendo las variables años de educación y país de la mujer las variables con más importancia.
 
 ```{r vip_fit_phijo}
 #| label: fig-vip_fit_phijo
@@ -822,13 +821,22 @@ explainer_fit_phijo <- explain_tidymodels(
   )
 ```
 
-```{r}
+```{r warning=FALSE}
 pdp_educ <- model_profile(explainer_fit_phijo, N = 1000, variables = "anio_educ")
 
 pdp_pais <- model_profile(explainer_fit_phijo, N = 1000, variables = "pais")
 ```
 
 [PROBAR SI SE PUEEDE A GEOM_RUG PONERLE UN JITTER]
+
+La @fig-pdp_educ muestra un gráfico de Dependencia Parcial del efecto marginal que tiene la variable de años de educación de la madre con respecto a la variable de interés del problema planteado. Este gráfico se obtiene mediante la función de dependencia parcial, que es la siguiente:
+
+$$
+f_S(x_S) = \mathbb{E}_X_C[f^{(x_S, x_C)}] = \int f^{(x_S, x_C)} \, dP(x_C)
+$$
+En la cual $X_S$ sería la variable años de educación y $X_C$ el resto de variables explicativas utilizadas en el modelo.
+En el gráfico se puede observar que la edad media de la mujer a la hora de tener su primer hijo en mujeres que tienen 10 o menos años de educación permanece constante entre los 19 y 20 años. Luego de los 10 años de educación, la edad media de la mujer al tener su primer hijo crece de forma abrupta por cada año extra de educación que tiene la mujer.
+
 
 ```{r pdp_educ}
 #| label: fig-pdp_educ
@@ -839,6 +847,7 @@ pdp_pais <- model_profile(explainer_fit_phijo, N = 1000, variables = "pais")
 
 plot(pdp_educ) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Años de Educación', y='Edad Media al Primer Hijo')
 ```
+La siguiente @fig-pdp_pais también muestra un gráfico PDP para analizar el efecto marginal de la variable de país sobre la variable de interés. En este caso, se observa algo similar a lo observado en el análisis exploratorio en la @fig-phijo_xpais, en donde los países europeos tienen la edad media de la mujer al tener su primer hijo un poco más alta que el resto.
 
 ```{r pdp_pais}
 #| label: fig-pdp_pais
