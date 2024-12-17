@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Modelado de Variables Demográficas Mediante Algoritmos de Aprendizaje Supervisado</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Facundo Morini, Mateo Pérez, Ignacio Tarigo" />
+    <script src="Presentacion_files/header-attrs-2.27/header-attrs.js"></script>
+    <link href="Presentacion_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="Presentacion_files/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <script src="Presentacion_files/kePrint-0.0.1/kePrint.js"></script>
+    <link href="Presentacion_files/lightable-0.0.1/lightable.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: right, top, my-title, title-slide
+
+.title[
+# Modelado de Variables Demográficas Mediante Algoritmos de Aprendizaje Supervisado
+]
+.subtitle[
+## Aprendizaje Estadístico Supervisado 2024
+]
+.author[
+### Facundo Morini, Mateo Pérez, Ignacio Tarigo
+]
+.date[
+### Diciembre 2024
+]
+
+---
+
+
+&lt;style type="text/css"&gt;
+body {
+  font-family: 'Roboto', sans-serif; 
+}
+
+h1 {
+  color: #005F8D; 
+  font-size:  2.2em !important; 
+  text-align: center; 
+  margin-bottom: 30px !important; 
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); 
+  font-weight: bold; 
+}
+
+h2 {
+ color: #005F8D; 
+  font-size: 2em !important; 
+  text-align: center; 
+  margin-bottom: 30px !important; 
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3); 
+  letter-spacing: 2px; 
+  font-weight: bold; 
+}
+
+h3 {
+  color: #2980B9; 
+  font-size: 1.4em;
+  font-weight: normal;
+}
+
+p {
+  font-size: 1em; 
+  line-height: 1.3;
+  color: #333333; 
+}
+
+&lt;/style&gt;
+
+
+
+
+# Introducción
+
+En este trabajo se propone el uso de modelos de aprendizaje supervisado para evaluar su desempeño en dos objetivos:  
+  
+- Predecir la edad al primer hijo de las mujeres  
+  
+- Clasificar si una mujer comienza su vida sexual antes o después de los 18 años  
+  
+En ambos casos, se emplearán variables socioeconómicas y comportamentales de las mujeres como predictores. Se priorizará el uso de modelos basados en árboles de decisión, como métodos de *Bagging* o *Boosting*.
+
+---
+
+# Introducción
+
+Los datos utilizados para este propósito provienen de las encuestas DHS, realizadas principalmente en países en vías de desarrollo. En este caso particular, se analizarán las encuestas de las rondas VI y VII, correspondientes a distintos países y realizadas entre los años 2010 y 2020.  
+
+El Programa de Encuestas Demográficas y de Salud (DHS) es responsable de recopilar y difundir datos
+precisos y representativos a nivel nacional sobre salud y población en países en desarrollo.  
+
+---
+
+# Descripción de los datos
+
+Se optó por seleccionar un grupo de países representativos de distintas regiones, se procuró que las encuestas seleccionadas correspondieran a un período de tiempo similar y que las variables, tanto de interés como explicativas, estuvieran disponibles en todas las encuestas incluidas.  
+  
+Se eligieron los siguientes países:  
+
+- América Latina y el Caribe: Perú, Guatemala y República Dominicana.  
+- Europa del este: Albania y Armenia.  
+- Norte y Sur de África: Etiopía y Sudáfrica.  
+
+Se dispone de un total de aproximadamente 105,000 observaciones correspondientes a mujeres de entre 15 y 64 años.  
+  
+Se trabaja principalmente con 30 variables que están disponibles para todos los países seleccionados y que, a priori, se consideran posiblemente relevantes para el análisis.
+
+---
+
+# Descripción de los datos
+
+&lt;table class="table" style="font-size: 7.5px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;caption style="font-size: initial !important;"&gt;Descripción de las variables disponibles en el trabajo.&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;"&gt; Codigo DHS &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Nombre &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Descripción &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Tipo &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; Recorrido &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; caseid &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; id &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Identificador de la mujer encuestada &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 104487 Mujeres &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v000 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; pais &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; País donde se realizó la encuesta &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 7 Paises &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v005 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; ponderador &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Peso de la mujer en la encuesta, número entero de 8 dígitos, donde 6 dígitos corresponden a decimales &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v007 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; anio &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Año en que se realizó la encuesta &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 2008-2018 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v012 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; edad &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Edad de la mujer encuestada &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 15-59 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v021 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; psu &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Unidad primaria de muestreo &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v022 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; estrato &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Estrato del que se obtuvo la observación &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v025 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; zona &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Indica si la mujer es de un área urbana o rural &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 1:Urbano, 2:Rural &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v119 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; hogar_elect &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Indica si el hogar tiene acceso a electricidad &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0:No, 1:Si &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v121 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; hogar_tv &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Indica si el hogar dispone de una televisión &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0:No, 1:Si &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v133 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; anio_educ &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Total de años de educación de la mujer, calculado a partir del nivel máximo de educación alcanzado; es un valor comparable entre países &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0-25 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v136 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; n_fam_hogar &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Total de personas que viven en el hogar &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 1-25 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v157 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; leer &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Frecuencia con la que la mujer lee un periódico, revista o libro &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0:Nada, 1:Ocasional, 2:Todos los días &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v158 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; radio &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Frecuencia con la que la mujer escucha la radio &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0:Nada, 1:Ocasional, 2:Todos los días &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Descripción de los datos
+
+&lt;table class="table" style="font-size: 7.5px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;caption style="font-size: initial !important;"&gt;Descripción de las variables disponibles en el trabajo.&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:center;"&gt; Codigo DHS &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Nombre &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Descripción &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Tipo &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; Recorrido &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v159 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; noticias &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Frecuencia con la que la mujer ve noticias &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0:Nada, 1:Ocasional, 2:Todos los días &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v190 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; cat_riqueza &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Categoría de riqueza del hogar &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 1:Más Pobre, 2:Pobre, 3:Medio, 4:Rico, 5:Más Rico &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v191 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; indice_riqueza &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Índice de riqueza del hogar estandarizado, calculado a partir de distintas medidas como materiales de construcción de la casa y servicios disponibles; 5 dígitos corresponden a decimales &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; -4.992-3.09962 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v212 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; edad_phijo &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Edad de la mujer al primer hijo &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 3-47 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v301 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; con_antic &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Conocimiento de algún método anticonceptivo, donde se distingue entre modernos (ej.: condón, pastillas, parches, etc.), tradicionales (ej.: coito interrumpido, calendario, etc.) y folklóricos (ej.: amuletos, rituales, etc.) &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0: Ninguno, 1:Folklórico, 2:Tradicional, 3:Moderno &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v364 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; uso_antic &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Intención de uso de métodos anticonceptivos &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 1:Usando Método, 2:No Usando Método, 3:Nunca Tiene Relaciones &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v503 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; cant_uniones &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Cantidad de uniones que ha tenido la mujer &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0: No casada, 1: Una unión, 2: Más de una unión &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v531 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; edad_psexo &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Edad de la mujer al primer acto sexual &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0-45 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v536 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; rec_sexo &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Relaciones sexuales recientes de la mujer &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0: Nunca, 1: Activa, 2: No activa &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v613 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; nideal_hijos &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Número ideal de hijos &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0-30 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v715 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; anio_educ_par &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Total de años de educación de la pareja de la mujer &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0-24 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v717 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; ocupacion &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Ocupación de la mujer &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0: No Trabaja, 1: Profesional/Técnico, 2: Agricultura, 3: Servicios/Ventas, 4: Doméstico, 5: Manual &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v836 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; n_parejas &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Cantidad de parejas sexuales que ha tenido la mujer &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Numérica Discreta &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 1-95 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Descripción de los datos
+
+Se debe tener en cuenta que los datos provienen de una muestra compleja, donde se utiliza un diseño muestral por conglomerados estratificado en dos etapas, donde en general se busca que la misma sea representativa tanto a nivel nacional, regional como al contexto urbano y rural.  
+  
+Debido a esto para una mejor representación a nivel de poblacional el diseño debería ser contemplado en los modelos a utilizar. En modelos como Random Forest la bibliografía de como incorporar esta información del diseño no esta ampliamente desarrollada, por lo cual para esta primera aproximación al problema se optó por no incorporar explícitamente en los modelos aunque si se ha tenido en cuenta en el análisis exploratorio, lo cual permite una mejor comprensión de la estructura y distribución de los datos.
+
+---
+
+# Edad al primer hijo
+
+La edad en que las mujeres comienzan a tener hijos está influenciada por una serie de factores en los que se encuentran comportamientos sociales como también por aspectos económicos y culturales. En la bibliografía suelen mencionarse algunos factores que están fuertemente vinculados a los procesos de fecundidad, como la mayor participación en el mercado laboral, el acceso a la educación de las mujeres, la planificación familiar y el uso de métodos anticonceptivos.  
+
+---
+
+# Edad al primer hijo
+
+
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-phijo_xpais-1.png" alt="Gráfico violín, distribución de la edad al primer hijo por país."  /&gt;
+&lt;p class="caption"&gt;Gráfico violín, distribución de la edad al primer hijo por país.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Edad al primer hijo
+
+&lt;table class="table" style="font-size: 9px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;caption style="font-size: initial !important;"&gt;Media y Desvio Estimados de la Edad al Primer Hijo por país&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; País &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; Media Edad &lt;/th&gt;
+   &lt;th style="text-align:center;"&gt; Desvio &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;width: 20em; "&gt; Etiopia &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 18.84 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 0.08 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;width: 20em; "&gt; Guatemala &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 19.60 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 0.04 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;width: 20em; "&gt; República Dominicana &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 20.11 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 0.10 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;width: 20em; "&gt; Perú &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 20.65 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 0.09 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;width: 20em; "&gt; Sudáfrica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 20.95 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 0.13 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;width: 20em; "&gt; Armenia &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 21.87 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 0.07 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;width: 20em; "&gt; Albania &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 22.84 &lt;/td&gt;
+   &lt;td style="text-align:center;width: 5em; "&gt; 0.07 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Edad al primer hijo
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-edu_att-1.png" alt="Gráfico Densidad, edad al primer hijo por Años de Educación de la Madre."  /&gt;
+&lt;p class="caption"&gt;Gráfico Densidad, edad al primer hijo por Años de Educación de la Madre.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Edad al primer hijo
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-edu_att_xpais-1.png" alt="Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."  /&gt;
+&lt;p class="caption"&gt;Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Edad al primer hijo
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-riqueza_xpais-1.png" alt="Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar."  /&gt;
+&lt;p class="caption"&gt;Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Edad al primer hijo
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-comp_parejas-1.png" alt="Gráfico Caja, distribución de la edad al primer hijo por cantidad de uniones y cantidad de parejas sexuales."  /&gt;
+&lt;p class="caption"&gt;Gráfico Caja, distribución de la edad al primer hijo por cantidad de uniones y cantidad de parejas sexuales.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Primera relación sexual
+
+La edad en que las mujeres comienzan a tener relaciones sexuales marca el inicio del riesgo a concebir y por tanto la misma está fuertemente relacionada con la edad al primer hijo. Gran parte de las variables comportamentales, económicas, educativas de la mujer que se observaron en la edad al primer hijo, también son relevantes para la edad al primer acto sexual. En este caso se trabajará con la variable si la mujer comienza su vida sexual antes o después de los 18 años.  
+
+---
+
+# Primera relación sexual
+
+
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-psexo_xpais-1.png" alt="Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país."  /&gt;
+&lt;p class="caption"&gt;Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Primera relación sexual
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-edu_att_clas-1.png" alt="Gráfico de caja, distribución de años de educación de la mujer por comienzo de relaciones sexuales."  /&gt;
+&lt;p class="caption"&gt;Gráfico de caja, distribución de años de educación de la mujer por comienzo de relaciones sexuales.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Primera relación sexual
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-psexo_xcat_riqueza-1.png" alt="Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por categría de riqueza."  /&gt;
+&lt;p class="caption"&gt;Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por categría de riqueza.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Primera relación sexual
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-psexo_xtv-1.png" alt="Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por si poseen o no un televisor en su hogar."  /&gt;
+&lt;p class="caption"&gt;Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por si poseen o no un televisor en su hogar.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+
+Antes de comenzar con el modelado se procede a realizar un filtrado de los datos y a seleccionar las variables más relevantes para el modelo.  
+
+En esta primera aproximación al problema se opta por solamente tomar las observaciones que dispongan de todos los datos necesarios para el modelo, no realizándose imputaciones de datos faltantes o análisis de la no respuesta a la encuesta.  
+
+En total se utilizan 46029 observaciones de mujeres donde se utilizara un 85% de los datos para entrenar y el 15% restante para evaluar los modelos considerados. En esta división se tendrá en cuenta el país de origen de la mujer para que no haya un desbalance de muchas observaciones de algún país en particular.  
+
+Uno de los problemas que se presentan en datos provenientes de encuestas es la presencia de valores extremos posiblemente vinculados a errores en el rellenado o por falta de conocimiento de la mujer encuestada. Para el caso de la edad al primer hijo, se filtran las observaciones con valores extremadamente atípicos o que no tienen sentido desde el punto de vista biológico. En este caso, se consideran únicamente las mujeres que tuvieron su primer hijo a partir de los 11 años, límite establecido con base en criterios biológicos.
+
+---
+
+# Modelado de la edad al primer hijo
+## Selección   de   covariables   relevantes
+
+Antes de seleccionar las variables para el modelo, se excluyen aquellas que carecen de sentido práctico. Por ejemplo, la variable edad de la mujer no se considera, ya que al trabajar únicamente con mujeres que ya han tenido hijos, incluirla implicaría utilizar una variable estrechamente relacionada con la variable de interés, lo que podría sesgar el modelo, especialmente en el caso de mujeres muy jóvenes. A su vez se excluye también la variable de edad a la primera relación sexual, ya que como se vio en el análisis exploratorio están muy fuertemente relacionadas e interesa más ver el efecto de otros factores desconociendo esta variable.  
+
+Debido a que se cuenta con un gran número de variables que posiblemente no sean todas relevantes, como paso previo a cada modelo se realiza un análisis de importancia de las variables. Para esto se utiliza un modelo de *Random Forest* donde se utiliza el método de permutación para calcular la importancia de las variables.  
+
+Para el ajuste de este modelo no se procura analizar ni afinar en detalle la grilla de hiperparámetros, sino que se busca obtener un modelo relativamente bueno del que se pueda extraer las variables más importantes. En base a esto se utiliza una grilla de 30 combinaciones posibles de la cantidad de variables a considerar en cada nodo (*mtry*) y la cantidad mínima de observaciones en cada nodo terminal (*min_n*). Se utilizó un *10-fold cross-validation* para evaluar los modelos y se seleccionó el mejor modelo en base a la métrica de raíz del error cuadrático medio.
+
+---
+
+# Modelado de la edad al primer hijo
+## Selección de covariables relevantes
+
+
+
+
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-vip_phijo-1.png" alt="Gráfico barras, importancia de las variables consideradas en el modelo de Random Forest mediante permutación para predecir la edad al primer hijo."  /&gt;
+&lt;p class="caption"&gt;Gráfico barras, importancia de las variables consideradas en el modelo de Random Forest mediante permutación para predecir la edad al primer hijo.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Selección de covariables relevantes
+
+En este caso las variables que quedaron seleccionadas son:
+
+1.  Años de educación de la mujer.
+2.  País de procedencia de la mujer.
+3.  Índice de riqueza del hogar.
+4.  Cantidad de uniones que ha tenido la mujer.
+5.  Años de educación de la pareja de la mujer.
+6.  Si el hogar dispone de televisión.
+7.  Categoría de riqueza del hogar.
+8.  Numero de parejas sexuales que ha tenido la mujer.
+9.  Numero ideal de hijos.
+10. Numero de personas que viven en el hogar.
+
+En este caso se trabaja íntegramente con '*tidymodels*' framework que permite realizar la evaluación de los modelos de manera sencilla. Se opta por evaluar la eficiencia de modelos basados en árboles: *Bagging*, *Random Forest* y *XGBoost*, donde para cada uno se realiza su correspondiente tuneo de hiperparámetros.
+
+---
+
+# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros
+
+Se procede a la búsqueda de hiperparámetros para los modelos en busca del modelo que presente la mejor *performance*. Para esto se crea una grilla específica para cada uno, evaluando todos los modelos en conjunto mediante *workflow_map*.
+
+Para los modelos de *Bagging* se entrenaron los parámetros de cantidad mínima de observaciones en cada nodo terminal (*min_n*) y la cantidad de árboles (*trees*). En la siguiente tabla se puede observar la grilla utilizada, que luego se visualizará si la misma es la adecuada para este problema.
+
+&lt;table class="table" style="font-size: 8px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;caption style="font-size: initial !important;"&gt;Grilla de hiperparámetros para modelos de Bagging&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; min_n &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 50 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 150 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 200 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 250 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 300 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 350 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 400 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 450 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 500 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1000 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1500 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2000 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2500 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; trees &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 50 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 500 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1000 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros
+
+En cuanto a los modelos de *Random Forest* se ajustan los hiperparámetros de cantidad mínima de observaciones en cada nodo terminal (*min_n*), la cantidad de variables a considerar en cada nodo (*mtry*) y la cantidad de árboles (*trees*). En la siguiente tabla se puede observar la grilla utilizada:
+
+&lt;table class="table" style="font-size: 8px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;caption style="font-size: initial !important;"&gt;Grilla de hiperparámetros para modelos de Random Forest&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; min_n &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 50 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 150 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 200 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 250 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 300 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 350 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 400 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 450 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 500 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1000 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1500 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2000 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2500 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; trees &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 50 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 100 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 500 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1000 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; mtry &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 2 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 4 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 6 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 8 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 10 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt;  &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros
+
+Para los modelos de *XGBoost* debido a la gran cantidad de hiperparámetros a ajustar se procedió de forma distinta no definiendo una grilla fija. En este caso se utilizará un método de búsqueda que permite evaluar un espacio de hiperparámetros de forma más eficiente, en particular se opto por utilizar *Latin hypercube sampling*, evaluando un total de 60 combinaciones posibles de hiperparámetros.
+
+En primer lugar se evaluó posibles rangos válidos para algunos de estos hiperparámetros. De esto se opto por limitar el rango de algunos de ellos como el *learn_rate* a un rango más acotado, mientras que a otros simplemente se utilizó los rangos por defecto que vienen en *tidymodels*.
+
+---
+
+# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros
+
+&lt;table class="table" style="font-size: 8px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;caption style="font-size: initial !important;"&gt;Grilla rango hiperparámetros para modelos de XGBoost&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt;  &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Valor min. &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; Valor max. &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; tree_depth &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 15 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; min_n &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 50 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 500 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; loss_reduction &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1e-10 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 31 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; sample_size &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1.0 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; mtry &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 10 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; learn_rate &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.0016 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; 0.1600 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+
+
+La búsqueda se realiza al igual que para el modelo de visualización de importancias mediante *10-fold cross-validation*. En las siguientes figuras se puede visualizar los valores de *RMSE* y *RSQ* para los modelos de *Bagging* y *Random Forest* respectivamente. En ambos gráficos parece bastante marcado una mejor *performance* para valores de *min_n* cercano a los `\(400\)`, pareciendo la grilla propuesta adecuada para este problema.
+
+---
+
+# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-tune_bagging_phijo-1.png" alt="Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Bagging."  /&gt;
+&lt;p class="caption"&gt;Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Bagging.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-tune_rf_phijo-1.png" alt="Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Random Forest."  /&gt;
+&lt;p class="caption"&gt;Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Random Forest.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Comparación de modelos
+
+Para comparar los modelos obtenidos, se realizó una comparación entre la métrica RMSE (Raíz del Error Cuadrático Medio) de cada uno. Esta medida representa la raíz cuadrada de la media de la diferencia entre los valores predichos y los observados al cuadrado. Mientras más bajo sea este valor, significa que menor es el error de estimación del modelo; entonces, al comparar los tres modelos realizados, se puede elegir cuál es el mejor para estimar, teniendo en cuenta esta métrica.  
+
+En este caso, el modelo ajustado por el método de Random Forest es el que tiene un valor más bajo del RMSE, aunque los tres valores son muy cercanos entre sí, por lo cual sugiere que el rendimiento de los modelos es muy similar. Esto se puede deber a que los tres son basados en árboles, entonces, por más que haya diferencias en la metodología, a grandes rasgos deberían predecir de forma similar.
+
+---
+
+# Modelado de la edad al primer hijo
+## Comparación de modelos
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-comp_modelos_phijo-1.png" alt="Gráfico comparación de los modelos de Bagging, Random Forest y XGBoost para predecir la edad al primer hijo."  /&gt;
+&lt;p class="caption"&gt;Gráfico comparación de los modelos de Bagging, Random Forest y XGBoost para predecir la edad al primer hijo.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Evaluación modelo final
+
+Una vez realizada la comparación de los modelos, y decidiéndose por el modelo realizado mediante el método de *Random Forest*, se procede a evaluar este modelo como modelo final.
+
+
+
+El primer paso a realizar es el análisis de los residuos. Se obtuvo la siguiente figura que compara el valor predicho por el modelo para cada individuo en el eje horizontal y el residuo, que es el valor verdaderamente observado menos el predicho, en el eje vertical. En el gráfico se puede observar cómo los puntos son bastante simétricos alrededor del cero, lo cual nos da un indicio de que el modelo no estaría sesgado. Tampoco se observa un patrón en la nube de puntos que indique que el modelo no haya ajustado correctamente. 
+
+---
+
+# Modelado de la edad al primer hijo
+## Evaluación modelo final
+
+Lo que sí se puede observar es la aparición de algunos valores atípicos de los residuos en la parte negativa del gráfico. Esto indica que, para los valores observados más altos, en los que una mujer tuvo un hijo, el modelo no logra estimar bien la edad a la que esa mujer realmente tuvo su primer hijo. Esto se puede corroborar observando que en el eje horizontal solo tenemos valores predichos menores a 30 años, mientras que en la base de datos sí existen mujeres que hayan tenido hijos luego de esa edad. Se intentó ajustar el modelo realizando transformaciones y teniendo en cuenta el muestreo en la edad, pero no tuvimos éxito en lograr que el modelo capte mejor a esas mujeres. Tal vez las covariables que están en el modelo no sean suficientemente relevantes para explicar este fenómeno.  
+
+Otro punto a considerar es que, observando los puntos segmentados por país, todos presentan aproximadamente el mismo comportamiento, lo cual lleva a considerar que el modelo predice de buena manera en todos ellos.
+
+---
+
+# Modelado de la edad al primer hijo
+## Evaluación modelo final
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-res_modelo_phijo-1.png" alt="Gráfico residuos vs predichos, conjunto de entrenamiento."  /&gt;
+&lt;p class="caption"&gt;Gráfico residuos vs predichos, conjunto de entrenamiento.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Evaluación modelo final
+
+Luego se realizó la siguiente figura para el conjunto de datos de testeo, en donde se observa en el eje horizontal el valor predicho de la edad de la mujer a la hora de tener su primer hijo, y en el eje vertical el valor real. Se pueden considerar los mismos puntos que el gráfico anterior, lo que indica que no existe un sobreajuste hacia el subconjunto de datos de entrenamiento. También, de igual manera que en el anterior gráfico, el modelo no logra predecir bien la edad de las mujeres que tuvieron su primer hijo después de los 30 años.
+
+---
+
+# Modelado de la edad al primer hijo
+## Evaluación modelo final
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-eval_modelo_phijo-1.png" alt="Gráfico predicho vs observado, conjunto de testeo."  /&gt;
+&lt;p class="caption"&gt;Gráfico predicho vs observado, conjunto de testeo.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Evaluación modelo final
+
+En la siguiente tabla se puede observar como el *RMSE* del modelo para cada país es muy similar al resto, lo cual confirma el punto observado en el gráfico anterior. La variable MAPE (Mean Absolute Percentage Error) indica la media del error porcentual de todas las observaciones de cada país. Los valores de esta métrica son muy parecidos para todos los países, y no indican que ningún país prediga muy mal la edad que tiene una mujer cuando tiene su primer hijo.
+
+&lt;table class="table" style="font-size: 8px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;caption style="font-size: initial !important;"&gt;Métricas en el conjunto de testeo&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; pais &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; rmse &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; mape &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Albania &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.63 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 12.16 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Armenia &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.56 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 11.74 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Etiopia &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.59 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 15.03 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Guatemala &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.61 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 13.45 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Perú &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.67 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 13.57 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; República Dominicana &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.70 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 14.60 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Sudáfrica &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.47 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 12.18 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Interpretación e importancia de las variables
+
+Lo primero a destacar es que en la siguiente figura, se obtuvieron resultados muy similares a los obtenidos en el anterior ejemplo y el análisis exploratorio, siendo las variables años de educación y país de la mujer las variables con más importancia.
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-vip_fit_phijo-1.png" alt="Gráfico barras, importancia de las variables consideradas en el modelo final."  /&gt;
+&lt;p class="caption"&gt;Gráfico barras, importancia de las variables consideradas en el modelo final.&lt;/p&gt;
+&lt;/div&gt;
+
+
+
+
+
+---
+
+# Modelado de la edad al primer hijo
+## Interpretación e importancia de las variables
+
+La siguiente figura muestra un gráfico de Dependencia Parcial del efecto marginal que tiene la variable de años de educación de la madre con respecto a la variable de interés del problema planteado.
+
+En el gráfico se puede observar que la edad media de la mujer a la hora de tener su primer hijo en mujeres que tienen 10 o menos años de educación permanece constante entre los 19 y 20 años. Luego de los 10 años de educación, la edad media de la mujer al tener su primer hijo crece de forma abrupta por cada año extra de educación que tiene la mujer.
+
+---
+
+# Modelado de la edad al primer hijo
+## Interpretación e importancia de las variables
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-pdp_educ-1.png" alt="Gráfico PDP, efecto de los años de educación en la edad al primer hijo."  /&gt;
+&lt;p class="caption"&gt;Gráfico PDP, efecto de los años de educación en la edad al primer hijo.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad al primer hijo
+## Interpretación e importancia de las variables
+
+La siguiente fugura también muestra un gráfico PDP para analizar el efecto marginal de la variable de país sobre la variable de interés. En este caso, se observa algo similar a lo observado en el análisis exploratorio, en donde los países europeos tienen la edad media de la mujer al tener su primer hijo un poco más alta que el resto.
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-pdp_pais-1.png" alt="Gráfico PDP, efecto del país en la edad al primer hijo."  /&gt;
+&lt;p class="caption"&gt;Gráfico PDP, efecto del país en la edad al primer hijo.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+
+Se procede a realizar el modelado de la edad a la primera relación sexual donde el procedimiento a realizar es muy similar al anterior. En primer lugar se realiza un filtrado de los datos, donde nuevamente se trabajará con observaciones que dispongan de todos los datos necesarios para el modelo. En este caso la variable de interés no esta presente con lo cual se debe construir a partir de la variable *edad_psexo*.
+
+Como se visualizó en el análisis exploratorio la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años en algunos países es bastante más baja. Con lo cual se decide crear otra variable que combine el país y la variable de interés, para que en el proceso de división de los datos o el remuestreo no haya un desbalance.
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Selección de covariables relevantes
+
+Previo a la división de los datos se procede por filtrar observaciones con valores extremadamente atípicos o que podrían carecer de sentido, en este caso se toma como límite inferior de la edad a la primera relación sexual los 9 años. Con lo que se cuentan con 49349 observaciones donde nuevamente se utilizará un 85% de los datos para entrenar y el 15% restante para evaluar los modelos considerados.
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Selección de covariables relevantes
+
+
+
+
+
+Nuevamente al igual que en el caso anterior existen potencialmente variables irrelevantes para el problema, con lo cual se decide realizar nuevamente un modelo de *Random Forest* y visualizar la importancia de las variables. El procedimiento utilizado es el mismo que en el caso anterior, donde se prueba una grilla de 30 combinaciones para *mtry* y *min_n*, seleccionando el mejor modelo en este caso al estar trabajado en un problema de clasificación se utiliza como métrica el área bajo la curva *ROC* (*roc_auc*).
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Selección de covariables relevantes
+
+En la siguiente figura se observa la importancia de las variables consideradas en el modelo seleccionado. Al igual que en la del anterior ejemplo, variables relacionadas con la educación o riqueza del hogar tienden a tener mayor importancia. De todas formas existen algunas diferencias sobre todo en el orden de importancia, aquí vemos que la cantidad de parejas de la mujer parecería incidir más en la edad a la que comienzan a tener relaciones sexuales. Además cabe destacar el aumento de importancia en este caso de la frecuencia con la que la mujer ve noticias, ésta información suele ser de interés en este tipo de estudios.
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Selección de covariables relevantes
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-vip_psexo-1.png" alt="Gráfico barras, importancia de las variables consideradas en el modelo de Random Forest mediante permutación para predecir si comienza a tener relaciones luego de los 18 años."  /&gt;
+&lt;p class="caption"&gt;Gráfico barras, importancia de las variables consideradas en el modelo de Random Forest mediante permutación para predecir si comienza a tener relaciones luego de los 18 años.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Selección de covariables relevantes
+
+Una vez visualizados los datos y las posibles relaciones entre las variables se procede a armar los modelos. De lo visto, mediante el modelo de *Random Forest*, se seleccionan las *10* variables que más importancia presentaron para clasificar si una mujer comienza su vida sexual antes o después de los 18 años.
+
+En este caso las variables que quedaron seleccionadas son:
+
+1.  Años de educación de la mujer.
+2.  País de procedencia de la mujer.
+3.  Índice de riqueza del hogar.
+4.  Numero de parejas sexuales que ha tenido la mujer.
+5.  Años de educación de la pareja de la mujer.
+6.  Cantidad de uniones que ha tenido la mujer.
+7.  Si el hogar dispone de televisión.
+8.  Categoría de riqueza del hogar.
+9.  La frecuencia con la que la mujer ve las noticias.
+10. Si el hogar tiene acceso a electricidad.
+
+En esta ocasión se propone el uso de modelos basados en árboles: *Bagging* y *Random Forest*. Además, se ajusto un modelo de regresión logística para evaluar si los resultados obtenidos por métodos de árboles o un método mas clásico como la logística difieren en su *performance* en este problema.
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Búsqueda de Hiperparámetros
+
+En este caso se ajustan los hiperparámetros de manera similar a lo realizado en el caso anterior, se ajustan en el caso de *Bagging* la cantidad de árboles y el tamaño mínimo de nodo, mientras que en el caso de *Random Forest* se ajustan la cantidad de variables a considerar en cada nodo (*mtry*), la cantidad mínima de observaciones en cada nodo terminal (*min_n*) y la cantidad de árboles (*trees*). En el caso de la regresión logística no requiere ajustes, ni hiperparámetros aunque si se visualizó la significancia de las covariables del modelo.
+
+Las grillas utilizadas para ambos modelos son las mismas que se utilizaron para la edad al primer hijo, observándose si la misma es adecuada para este problema. En las siguientes figuras se pueden observar los resultados de la búsqueda de hiperparámetros para los modelos de *Bagging* y *Random Forest* respectivamente. Donde se presentan las metricas de *accuracy*, *Brier Score* y área bajo la curva *ROC*.
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Búsqueda de Hiperparámetros
+
+
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-tune_bagging_psexo-1.png" alt="Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Bagging."  /&gt;
+&lt;p class="caption"&gt;Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Bagging.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Búsqueda de Hiperparámetros
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-tune_rf_psexo-1.png" alt="Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Random Forest."  /&gt;
+&lt;p class="caption"&gt;Gráfico, resultados de la búsqueda de hiperparámetros para modelos de Random Forest.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Comparación de modelos
+
+En este caso en la @fig-comp_modelos_psexo se observa la comparación de los modelos de *Bagging*, *Random Forest* y *Regresión Logística* mediante la métrica de área bajo la curva *ROC*. En este caso el modelo de *Random Forest* es el que presenta un mejor desempeño, aunque al igual que en el primer problema los modelos de *Bagging* difieren muy poco en su *performance*. La regresión logística presenta un desempeño inferior algo esperable dada la gran cantidad de datos y variables aunque presenta un desempeño aceptable.
+
+
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-comp_modelos_psexo-1.png" alt="Gráfico comparación de los modelos de Bagging, Random Forest y Regresión Logística, mediante validación cruzada."  /&gt;
+&lt;p class="caption"&gt;Gráfico comparación de los modelos de Bagging, Random Forest y Regresión Logística, mediante validación cruzada.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Comparación de modelos
+
+
+
+Tambien podemos visualizar los rendimientos de los modelos mediante las curvas *ROC* en la @fig-comp_roc_psexo. En este caso tambien se observa como los modelos de *RF* y *Bagging* presentan una *performance* algo superior a la regresión logística.
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-comp_roc_psexo-1.png" alt="Gráfico, comparación curvas ROC para los modelos considerados en el conjunto de testeo"  /&gt;
+&lt;p class="caption"&gt;Gráfico, comparación curvas ROC para los modelos considerados en el conjunto de testeo&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Evalación modelo final
+
+
+
+En la siguiente figura se observa la matriz de confusión para el modelo de *Random Forest* en el conjunto de testeo. En este caso el rendimiento del modelo parece aceptable, donde está ciertamente balanceado en la cantidad de falsos positivos y falsos negativos. Aunque el mismo presenta un desempeño algo inferior en clasificar mujeres que comienzan su vida sexual antes de los 18 años.
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-conf_mat-1.png" alt="Matriz de confusión para el modelo de Random Forest en el conjunto de testeo."  /&gt;
+&lt;p class="caption"&gt;Matriz de confusión para el modelo de Random Forest en el conjunto de testeo.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Evalación modelo final
+
+A partir de la misma es posible calcular las métricas para evaluar el rendimiento del modelo, se puede observar en la siguiente tabla las métricas más importantes. En este caso la precisión del modelo supera por encima del 70% lo cual es un valor aceptable considerando el problema planteado. En cuanto a la sensibilidad y especificidad del modelo se observa que la especificidad es algo inferior a la sensibilidad, al igual que lo observado en la matriz de confusion el modelo tiene mayor dificultad en clasificar correctamente las mujeres que comienzan a tener relaciones sexuales antes de los 18 años.
+
+&lt;table class="table" style="font-size: 8px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;caption style="font-size: initial !important;"&gt;Métricas en el conjunto de testeo&lt;/caption&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; Metrica &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; Valor &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Accuracy &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.70 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Sensibilidad &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.75 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; Especificidad &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.65 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Interpretación de las variables
+
+Al igual que el caso de la edad al primer hijo se procede a visualizar la interpretación de las variables en el modelo mediante los gráficos de dependencia parcial.
+
+
+
+
+
+Se observa en la siguiente figura que el efecto de los años de educación de la mujer en la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años. Se observa que la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años aumenta de forma abrupta a partir de los 10 años de educación el efecto es similar al observado en el caso de la edad al primer hijo.
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-pdp_educ_psexo-1.png" alt="Gráfico PDP, efecto de los años de educación en la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años."  /&gt;
+&lt;p class="caption"&gt;Gráfico PDP, efecto de los años de educación en la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Interpretación de las variables
+
+En cuanto al índice de riqueza el efecto parece menos marcado que en el caso anterior, en la siguiente figura se observa que la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años incrementa pero de forma irregular al aumentar el indice de riqueza del hogar.
+
+
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-pdp_riq_psexo-1.png" alt="Gráfico PDP, efecto del indice de riqueza en el hogar en la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años."  /&gt;
+&lt;p class="caption"&gt;Gráfico PDP, efecto del indice de riqueza en el hogar en la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Modelado de la edad a la primera relación sexual
+## Interpretación de las variables
+
+En cuanto al país de residencia de la mujer, al igual que como se observó en el análisis exploratorio, es esperable que países como Albania o Armenia presenten una mayor probabilidad de comenzar a tener relaciones sexuales luego de los 18 años. En la siguiente figura se observa algo razonable con lo visto donde Armenia y Albania están por encima del resto de los países.
+
+
+
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="Presentacion_files/figure-html/fig-pdp_pais_psexo-1.png" alt="Gráfico PDP, efecto del pais de la mujer en la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años."  /&gt;
+&lt;p class="caption"&gt;Gráfico PDP, efecto del pais de la mujer en la probabilidad de comenzar a tener relaciones sexuales luego de los 18 años.&lt;/p&gt;
+&lt;/div&gt;
+
+---
+
+# Comentarios Finales
+
+Como se observo el resultado general de los modelos fue aceptable en ambos casos, teniendo en cuenta que las variables de interés son de naturaleza compleja y el error irreducible en este tipo de caso es elevado. En cuanto las mejoras posibles se debería considerar formas de mejorar la predicción en el caso de edad del primer hijo para mujeres de mayores edades algo que no se ha conseguido captar en este caso, algo que posiblemente se deba a que no se tengan covariables óptimas para captar este fenómeno.
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
