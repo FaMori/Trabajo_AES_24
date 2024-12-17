@@ -60,33 +60,38 @@ library(tidymodels)
 library(vip)
 library(DALEX)
 library(DALEXtra)
+set.seed(1243)
 ```
 
 
 # Introducción
 
-En este trabajo se propone el uso de modelos de aprendizaje supervisado para evaluar su desempeño en dos objetivos:  
-  
-- Predecir la edad al primer hijo de las mujeres  
-  
-- Clasificar si una mujer comienza su vida sexual antes o después de los 18 años  
-  
-En ambos casos, se emplearán variables socioeconómicas y comportamentales de las mujeres como predictores. Se priorizará el uso de modelos basados en árboles de decisión, como métodos de *Bagging* o *Boosting*.
+Cuando se trabaja con *modelos basados en agentes* en el ámbito demográfico como el modelado de la tasa especifica de fecundidad (ASFR), es usual modelar o hacer cierto supuestos sobre la edad en que las mujeres comienzan a estar en riesgo de concebir.
 
+```{r echo=FALSE, out.width='50%', fig.cap="Ejemplo de tasa especifica de fecundidad (ASFR)", fig.align='center'}
+knitr::include_graphics('figs_pres/ASFR.png')
+```
 ---
 
 # Introducción
 
-Los datos utilizados para este propósito provienen de las encuestas DHS, realizadas principalmente en países en vías de desarrollo. En este caso particular, se analizarán las encuestas de las rondas VI y VII, correspondientes a distintos países y realizadas entre los años 2010 y 2020.  
+Es por esto que en este trabajo nos interesa evaluar el desempeño de modelos de aprendizaje supervisado en dos objetivos:  
+  
+- **Predecir la edad al primer hijo de las mujeres**.  
+  
+- **Clasificar si una mujer comienza su vida sexual antes o después de los 18 años**.  
+  
+En ambos casos, se emplearán variables socioeconómicas y comportamentales de las mujeres como predictores. En parte al gran numero de datos disponibles se priorizará el uso de modelos basados en árboles de decisión, como métodos de Bagging o Boosting.
 
-El Programa de Encuestas Demográficas y de Salud (DHS) es responsable de recopilar y difundir datos
-precisos y representativos a nivel nacional sobre salud y población en países en desarrollo.  
+Los datos provienen de las *encuestas DHS* (Programa de Encuestas Demográficas y de Salud), realizadas principalmente en países en desarrollo. Se analizarán las rondas VI y VII, llevadas a cabo entre 2010 y 2020 en varios países.
+
+El programa, gestionado y financiado por la Agencia de los Estados Unidos para el Desarrollo Internacional (USAID), recopila y difunde datos representativos a nivel nacional sobre salud y población.
 
 ---
 
 # Descripción de los datos
 
-Se optó por seleccionar un grupo de países representativos de distintas regiones, se procuró que las encuestas seleccionadas correspondieran a un período de tiempo similar y que las variables, tanto de interés como explicativas, estuvieran disponibles en todas las encuestas incluidas.  
+Se seleccionó un grupo de países representativos de distintas regiones, asegurando un período de tiempo similar y la disponibilidad de variables clave en todas las encuestas. 
   
 Se eligieron los siguientes países:  
 
@@ -94,9 +99,7 @@ Se eligieron los siguientes países:
 - Europa del este: Albania y Armenia.  
 - Norte y Sur de África: Etiopía y Sudáfrica.  
 
-Se dispone de un total de aproximadamente 105,000 observaciones correspondientes a mujeres de entre 15 y 64 años.  
-  
-Se trabaja principalmente con 30 variables que están disponibles para todos los países seleccionados y que, a priori, se consideran posiblemente relevantes para el análisis.
+El análisis incluye aproximadamente 105.000 observaciones de mujeres entre 15 y 64 años y se centra en 30 variables comunes consideradas relevantes.
 
 ---
 
@@ -254,11 +257,11 @@ tabla_variables <- data.frame(cod_variables, name_variables,desc_variables,tipo_
 
 names(datos_dhs) <- name_variables 
 
-tabla_variables1 <- tabla_variables[1:14,]
-tabla_variables2 <- tabla_variables[15:nrow(tabla_variables),]
+tabla_variables1 <- tabla_variables[1:15,]
+tabla_variables2 <- tabla_variables[16:nrow(tabla_variables),]
 
 kable(tabla_variables1, caption = 'Descripción de las variables disponibles en el trabajo.', col.names = c('Codigo DHS','Nombre','Descripción','Tipo','Recorrido'), align = 'clllc', booktabs = TRUE) %>% 
-  kable_styling(latex_options = "striped", font_size = 7.5, position = "center") %>% column_spec(3, width = '26em') %>%
+  kable_styling(latex_options = "striped", font_size = 12, position = "center") %>% column_spec(3, width = '26em') %>%
   column_spec(5, width = '10em') %>% column_spec(c(1,2), width = '4.5em')
 ```
 
@@ -268,7 +271,7 @@ kable(tabla_variables1, caption = 'Descripción de las variables disponibles en 
 
 ```{r}
 kable(tabla_variables2, caption = 'Descripción de las variables disponibles en el trabajo.', col.names = c('Codigo DHS','Nombre','Descripción','Tipo','Recorrido'), align = 'clllc', booktabs = TRUE, row.names = FALSE) %>% 
-  kable_styling(latex_options = "striped", font_size = 7.5, position = "center") %>% column_spec(3, width = '26em') %>%
+  kable_styling(latex_options = "striped", font_size = 10, position = "center") %>% column_spec(3, width = '26em') %>%
   column_spec(5, width = '10em') %>% column_spec(c(1,2), width = '4.5em')
 ```
 
@@ -276,31 +279,24 @@ kable(tabla_variables2, caption = 'Descripción de las variables disponibles en 
 
 # Descripción de los datos
 
-Se debe tener en cuenta que los datos provienen de una muestra compleja, donde se utiliza un diseño muestral por conglomerados estratificado en dos etapas, donde en general se busca que la misma sea representativa tanto a nivel nacional, regional como al contexto urbano y rural.  
-  
-Debido a esto para una mejor representación a nivel de poblacional el diseño debería ser contemplado en los modelos a utilizar. En modelos como Random Forest la bibliografía de como incorporar esta información del diseño no esta ampliamente desarrollada, por lo cual para esta primera aproximación al problema se optó por no incorporar explícitamente en los modelos aunque si se ha tenido en cuenta en el análisis exploratorio, lo cual permite una mejor comprensión de la estructura y distribución de los datos.
+Los datos provienen de una muestra compleja con un diseño muestral **estratificado por conglomerados en dos etapas**, representativo a nivel nacional, regional, y urbano-rural.
+
+Aunque este diseño debería incorporarse en los modelos para una mejor representación poblacional, en modelos como Random Forest no existe bibliografía ampliamente desarrollada al respecto. Por ello, en esta primera aproximación **NO** se incorpora explícitamente, aunque sí se considera en el análisis exploratorio para comprender mejor la estructura y distribución de los datos.
+
+A su vez el análisis exploratorio teniendo en cuenta el diseño o no, dio resultados muy similares con lo que la muestra en principio es representativa de la población.
 
 ---
 
 # Edad al primer hijo
 
-La edad en que las mujeres comienzan a tener hijos está influenciada por una serie de factores en los que se encuentran comportamientos sociales como también por aspectos económicos y culturales. En la bibliografía suelen mencionarse algunos factores que están fuertemente vinculados a los procesos de fecundidad, como la mayor participación en el mercado laboral, el acceso a la educación de las mujeres, la planificación familiar y el uso de métodos anticonceptivos.  
-
----
-
-# Edad al primer hijo
+La edad en que las mujeres comienzan a tener hijos está influenciada por factores sociales, económicos y culturales. La bibliografía destaca elementos fuertemente vinculados a la fecundidad, como la participación laboral femenina, el acceso a la educación, la planificación familiar y el uso de métodos anticonceptivos.
 
 ```{r muestra_phijo}
 muestra_phijo <- datos_dhs %>% filter(edad_phijo >= 11) %>% na.omit() %>%
               as_survey_design(ids=psu,strata=estrato, weights=ponderador, nest=TRUE)
 ```
 
-```{r phijo_xpais , fig.pos='H'}
-#| label: fig-phijo_xpais
-#| fig-cap: "Gráfico violín, distribución de la edad al primer hijo por país."
-#| fig-align: center
-#| fig-height: 4
-#| fig-width: 6.4
+```{r phijo_xpais , fig.align='center',fig.cap="Gráfico violín, distribución de la edad al primer hijo por país.",fig.height=3,dpi=250}
 
 mean_ephijo <- muestra_phijo %>% 
               group_by(pais) %>%
@@ -312,13 +308,14 @@ ggsurvey(aes(x = edad_phijo, y = pais, fill=pais))  + geom_violin() +
   theme_minimal() + labs(x = 'Edad al primer hijo', y = 'País') + theme(legend.position = 'none') + scale_fill_viridis_d() 
 ```
 
+
 ---
 
 # Edad al primer hijo
 
 ```{r tabla_mean_phijo}
 kable(mean_ephijo %>% mutate(across(c('edad_phijo', 'edad_phijo_se'), ~ round(., 2))) %>% arrange(edad_phijo), caption = 'Media y Desvio Estimados de la Edad al Primer Hijo por país', col.names = c('País','Media Edad','Desvio'), align = 'lcc', booktabs = TRUE) %>% 
-  kable_styling(latex_options = "striped", font_size = 9, position = "center") %>% column_spec(1, width = '20em') %>% column_spec(c(2,3), width = '5em')
+  kable_styling(latex_options = "striped", font_size = 15, position = "center") %>% column_spec(1, width = '20em') %>% column_spec(c(2,3), width = '5em')
 
 ```
 
@@ -326,12 +323,7 @@ kable(mean_ephijo %>% mutate(across(c('edad_phijo', 'edad_phijo_se'), ~ round(.,
 
 # Edad al primer hijo
 
-```{r edu_att , fig.pos='H'}
-#| label: fig-edu_att
-#| fig-cap: "Gráfico Densidad, edad al primer hijo por Años de Educación de la Madre."
-#| fig-align: center
-#| fig-height: 3.6
-#| fig-width: 6.2
+```{r edu_att , fig.pos='H', fig.align='center', fig.height=4, dpi=250, fig.cap="Gráfico Densidad, edad al primer hijo por Años de Educación de la Madre."}
 
 muestra_phijo %>% filter(anio_educ<22) %>%
   ggsurvey(aes(x = edad_phijo, color = anio_educ, group=anio_educ)) + geom_density(linewidth=0.8) +
@@ -344,12 +336,7 @@ muestra_phijo %>% filter(anio_educ<22) %>%
 
 # Edad al primer hijo
 
-```{r edu_att_xpais , fig.pos='H'}
-#| label: fig-edu_att_xpais
-#| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."
-#| fig-align: center
-#| fig-height: 3.8
-#| fig-width: 6.4
+```{r edu_att_xpais , fig.pos='H', fig.align='center', fig.height=4, dpi=250, fig.cap="Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."}
 
 muestra_phijo %>% mutate(anio_edu_15=as.factor(ifelse(anio_educ>=15,1,0)),pais=case_when(pais=="República Dominicana"~"Rep. Dominicana",T~pais)) %>%
  ggsurvey(aes(x = pais, y=	edad_phijo, fill=anio_edu_15)) + 
@@ -360,12 +347,7 @@ muestra_phijo %>% mutate(anio_edu_15=as.factor(ifelse(anio_educ>=15,1,0)),pais=c
 
 # Edad al primer hijo
 
-```{r riqueza_xpais , fig.pos='H'}
-#| label: fig-riqueza_xpais
-#| fig-cap: "Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar."
-#| fig-align: center
-#| fig-height: 3.5
-#| fig-width: 6.4
+```{r riqueza_xpais , fig.pos='H', fig.align='center', fig.height=4, dpi=250, fig.cap="Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar."}
 
 muestra_phijo %>% filter(pais%in%c('Armenia','Albania','Guatemala','Perú','Sudáfrica','República Dominicana')) %>%
   mutate(cat_riqueza = factor(cat_riqueza, levels = c('Más Pobre', 'Pobre', 'Medio', 'Rico', 'Más Rico'), ordered = T)) %>%
@@ -377,32 +359,9 @@ muestra_phijo %>% filter(pais%in%c('Armenia','Albania','Guatemala','Perú','Sud�
 
 ---
 
-# Edad al primer hijo
-
-```{r comp_parejas , fig.pos='H'}
-#| label: fig-comp_parejas
-#| fig-cap: "Gráfico Caja, distribución de la edad al primer hijo por cantidad de uniones y cantidad de parejas sexuales."
-#| fig-align: center
-#| fig-height: 3
-#| fig-width: 6
-
-muestra_phijo %>% mutate(n_parejas=as.factor(case_when(n_parejas == 1 ~ '1', n_parejas == 2 ~ '2', n_parejas == 3 ~ '3', 
-n_parejas >= 4 ~ '4 o más'))) %>%
- ggsurvey(aes(y = edad_phijo, x= n_parejas,fill=cant_uniones))  +  geom_boxplot(color = "grey") +
-  labs(x = "Cantidad de parejas sexuales",
-       y = "Edad al Primer Hijo") +
-  theme_minimal() + scale_fill_viridis_d(name="Cantidad de uniones")
-```
-
----
-
 # Primera relación sexual
 
-La edad en que las mujeres comienzan a tener relaciones sexuales marca el inicio del riesgo a concebir y por tanto la misma está fuertemente relacionada con la edad al primer hijo. Gran parte de las variables comportamentales, económicas, educativas de la mujer que se observaron en la edad al primer hijo, también son relevantes para la edad al primer acto sexual. En este caso se trabajará con la variable si la mujer comienza su vida sexual antes o después de los 18 años.  
-
----
-
-# Primera relación sexual
+La edad de inicio de las relaciones sexuales marca el inicio del riesgo de concebir y está estrechamente relacionada con la edad al primer hijo. Factores comportamentales, económicos y educativos relevantes para la edad al primer hijo también influyen en esta variable. En este análisis, se considerará si la mujer inicia su vida sexual antes o después de los 18 años.
 
 ```{r muestra_psexo}
 muestra_psexo <- datos_dhs %>% filter(edad_psexo >= 9) %>% na.omit() %>%
@@ -410,12 +369,7 @@ muestra_psexo <- datos_dhs %>% filter(edad_psexo >= 9) %>% na.omit() %>%
               as_survey_design(ids=psu,strata=estrato, weights=ponderador, nest=TRUE)
 ```
 
-```{r psexo_xpais , fig.pos='H'}
-#| label: fig-psexo_xpais
-#| fig-cap: "Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país."
-#| fig-align: center
-#| fig-height: 3.5
-#| fig-width: 5
+```{r psexo_xpais , fig.pos='H', fig.align='center', fig.height=3.5, dpi=200, fig.cap="Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país."}
 
 prop_psexo <- muestra_psexo %>%
               group_by(pais) %>%
@@ -433,12 +387,7 @@ ggplot(aes(x = pais, y = proporcion, fill=edad)) +
 
 # Primera relación sexual
 
-```{r edu_att_clas , fig.pos='H'}
-#| label: fig-edu_att_clas
-#| fig-cap: "Gráfico de caja, distribución de años de educación de la mujer por comienzo de relaciones sexuales."
-#| fig-align: center
-#| fig-height: 3
-#| fig-width: 4.5
+```{r edu_att_clas, fig.pos='H', fig.align='center', fig.height=4, dpi=250, fig.cap="Gráfico de caja, distribución de años de educación de la mujer por comienzo de relaciones sexuales."}
 
 muestra_psexo %>% 
   ggsurvey(aes(x = as.factor(psexo_18), y = anio_educ,fill=as.factor(psexo_18))) + geom_boxplot(color = "grey") +

@@ -4,7 +4,7 @@
     <title>Modelado de Variables Demográficas Mediante Algoritmos de Aprendizaje Supervisado</title>
     <meta charset="utf-8" />
     <meta name="author" content="Facundo Morini, Mateo Pérez, Ignacio Tarigo" />
-    <script src="Presentacion_files/header-attrs-2.27/header-attrs.js"></script>
+    <script src="Presentacion_files/header-attrs-2.28/header-attrs.js"></script>
     <link href="Presentacion_files/remark-css-0.0.1/default.css" rel="stylesheet" />
     <link href="Presentacion_files/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
     <script src="Presentacion_files/kePrint-0.0.1/kePrint.js"></script>
@@ -73,28 +73,33 @@ p {
 
 # Introducción
 
-En este trabajo se propone el uso de modelos de aprendizaje supervisado para evaluar su desempeño en dos objetivos:  
-  
-- Predecir la edad al primer hijo de las mujeres  
-  
-- Clasificar si una mujer comienza su vida sexual antes o después de los 18 años  
-  
-En ambos casos, se emplearán variables socioeconómicas y comportamentales de las mujeres como predictores. Se priorizará el uso de modelos basados en árboles de decisión, como métodos de *Bagging* o *Boosting*.
+Cuando se trabaja con *modelos basados en agentes* en el ámbito demográfico como el modelado de la tasa especifica de fecundidad (ASFR), es usual modelar o hacer cierto supuestos sobre la edad en que las mujeres comienzan a estar en riesgo de concebir.
 
+&lt;div class="figure" style="text-align: center"&gt;
+&lt;img src="figs_pres/ASFR.png" alt="Ejemplo de tasa especifica de fecundidad (ASFR)" width="50%" /&gt;
+&lt;p class="caption"&gt;Ejemplo de tasa especifica de fecundidad (ASFR)&lt;/p&gt;
+&lt;/div&gt;
 ---
 
 # Introducción
 
-Los datos utilizados para este propósito provienen de las encuestas DHS, realizadas principalmente en países en vías de desarrollo. En este caso particular, se analizarán las encuestas de las rondas VI y VII, correspondientes a distintos países y realizadas entre los años 2010 y 2020.  
+Es por esto que en este trabajo nos interesa evaluar el desempeño de modelos de aprendizaje supervisado en dos objetivos:  
+  
+- **Predecir la edad al primer hijo de las mujeres**.  
+  
+- **Clasificar si una mujer comienza su vida sexual antes o después de los 18 años**.  
+  
+En ambos casos, se emplearán variables socioeconómicas y comportamentales de las mujeres como predictores. En parte al gran numero de datos disponibles se priorizará el uso de modelos basados en árboles de decisión, como métodos de Bagging o Boosting.
 
-El Programa de Encuestas Demográficas y de Salud (DHS) es responsable de recopilar y difundir datos
-precisos y representativos a nivel nacional sobre salud y población en países en desarrollo.  
+Los datos provienen de las *encuestas DHS* (Programa de Encuestas Demográficas y de Salud), realizadas principalmente en países en desarrollo. Se analizarán las rondas VI y VII, llevadas a cabo entre 2010 y 2020 en varios países.
+
+El programa, gestionado y financiado por la Agencia de los Estados Unidos para el Desarrollo Internacional (USAID), recopila y difunde datos representativos a nivel nacional sobre salud y población.
 
 ---
 
 # Descripción de los datos
 
-Se optó por seleccionar un grupo de países representativos de distintas regiones, se procuró que las encuestas seleccionadas correspondieran a un período de tiempo similar y que las variables, tanto de interés como explicativas, estuvieran disponibles en todas las encuestas incluidas.  
+Se seleccionó un grupo de países representativos de distintas regiones, asegurando un período de tiempo similar y la disponibilidad de variables clave en todas las encuestas. 
   
 Se eligieron los siguientes países:  
 
@@ -102,15 +107,13 @@ Se eligieron los siguientes países:
 - Europa del este: Albania y Armenia.  
 - Norte y Sur de África: Etiopía y Sudáfrica.  
 
-Se dispone de un total de aproximadamente 105,000 observaciones correspondientes a mujeres de entre 15 y 64 años.  
-  
-Se trabaja principalmente con 30 variables que están disponibles para todos los países seleccionados y que, a priori, se consideran posiblemente relevantes para el análisis.
+El análisis incluye aproximadamente 105.000 observaciones de mujeres entre 15 y 64 años y se centra en 30 variables comunes consideradas relevantes.
 
 ---
 
 # Descripción de los datos
 
-&lt;table class="table" style="font-size: 7.5px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;table class="table" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;"&gt;
 &lt;caption style="font-size: initial !important;"&gt;Descripción de las variables disponibles en el trabajo.&lt;/caption&gt;
  &lt;thead&gt;
   &lt;tr&gt;
@@ -220,6 +223,13 @@ Se trabaja principalmente con 30 variables que están disponibles para todos los
    &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
    &lt;td style="text-align:center;width: 10em; "&gt; 0:Nada, 1:Ocasional, 2:Todos los días &lt;/td&gt;
   &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:center;width: 4.5em; "&gt; v159 &lt;/td&gt;
+   &lt;td style="text-align:left;width: 4.5em; "&gt; noticias &lt;/td&gt;
+   &lt;td style="text-align:left;width: 26em; "&gt; Frecuencia con la que la mujer ve noticias &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
+   &lt;td style="text-align:center;width: 10em; "&gt; 0:Nada, 1:Ocasional, 2:Todos los días &lt;/td&gt;
+  &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
 
@@ -227,7 +237,7 @@ Se trabaja principalmente con 30 variables que están disponibles para todos los
 
 # Descripción de los datos
 
-&lt;table class="table" style="font-size: 7.5px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;table class="table" style="font-size: 10px; color: black; margin-left: auto; margin-right: auto;"&gt;
 &lt;caption style="font-size: initial !important;"&gt;Descripción de las variables disponibles en el trabajo.&lt;/caption&gt;
  &lt;thead&gt;
   &lt;tr&gt;
@@ -239,13 +249,6 @@ Se trabaja principalmente con 30 variables que están disponibles para todos los
   &lt;/tr&gt;
  &lt;/thead&gt;
 &lt;tbody&gt;
-  &lt;tr&gt;
-   &lt;td style="text-align:center;width: 4.5em; "&gt; v159 &lt;/td&gt;
-   &lt;td style="text-align:left;width: 4.5em; "&gt; noticias &lt;/td&gt;
-   &lt;td style="text-align:left;width: 26em; "&gt; Frecuencia con la que la mujer ve noticias &lt;/td&gt;
-   &lt;td style="text-align:left;"&gt; Categórica &lt;/td&gt;
-   &lt;td style="text-align:center;width: 10em; "&gt; 0:Nada, 1:Ocasional, 2:Todos los días &lt;/td&gt;
-  &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:center;width: 4.5em; "&gt; v190 &lt;/td&gt;
    &lt;td style="text-align:left;width: 4.5em; "&gt; cat_riqueza &lt;/td&gt;
@@ -337,32 +340,31 @@ Se trabaja principalmente con 30 variables que están disponibles para todos los
 
 # Descripción de los datos
 
-Se debe tener en cuenta que los datos provienen de una muestra compleja, donde se utiliza un diseño muestral por conglomerados estratificado en dos etapas, donde en general se busca que la misma sea representativa tanto a nivel nacional, regional como al contexto urbano y rural.  
-  
-Debido a esto para una mejor representación a nivel de poblacional el diseño debería ser contemplado en los modelos a utilizar. En modelos como Random Forest la bibliografía de como incorporar esta información del diseño no esta ampliamente desarrollada, por lo cual para esta primera aproximación al problema se optó por no incorporar explícitamente en los modelos aunque si se ha tenido en cuenta en el análisis exploratorio, lo cual permite una mejor comprensión de la estructura y distribución de los datos.
+Los datos provienen de una muestra compleja con un diseño muestral **estratificado por conglomerados en dos etapas**, representativo a nivel nacional, regional, y urbano-rural.
+
+Aunque este diseño debería incorporarse en los modelos para una mejor representación poblacional, en modelos como Random Forest no existe bibliografía ampliamente desarrollada al respecto. Por ello, en esta primera aproximación **NO** se incorpora explícitamente, aunque sí se considera en el análisis exploratorio para comprender mejor la estructura y distribución de los datos.
+
+A su vez el análisis exploratorio teniendo en cuenta el diseño o no, dio resultados muy similares con lo que la muestra en principio es representativa de la población.
 
 ---
 
 # Edad al primer hijo
 
-La edad en que las mujeres comienzan a tener hijos está influenciada por una serie de factores en los que se encuentran comportamientos sociales como también por aspectos económicos y culturales. En la bibliografía suelen mencionarse algunos factores que están fuertemente vinculados a los procesos de fecundidad, como la mayor participación en el mercado laboral, el acceso a la educación de las mujeres, la planificación familiar y el uso de métodos anticonceptivos.  
-
----
-
-# Edad al primer hijo
+La edad en que las mujeres comienzan a tener hijos está influenciada por factores sociales, económicos y culturales. La bibliografía destaca elementos fuertemente vinculados a la fecundidad, como la participación laboral femenina, el acceso a la educación, la planificación familiar y el uso de métodos anticonceptivos.
 
 
 
 &lt;div class="figure" style="text-align: center"&gt;
-&lt;img src="Presentacion_files/figure-html/fig-phijo_xpais-1.png" alt="Gráfico violín, distribución de la edad al primer hijo por país."  /&gt;
+&lt;img src="Presentacion_files/figure-html/phijo_xpais -1.png" alt="Gráfico violín, distribución de la edad al primer hijo por país."  /&gt;
 &lt;p class="caption"&gt;Gráfico violín, distribución de la edad al primer hijo por país.&lt;/p&gt;
 &lt;/div&gt;
+
 
 ---
 
 # Edad al primer hijo
 
-&lt;table class="table" style="font-size: 9px; color: black; margin-left: auto; margin-right: auto;"&gt;
+&lt;table class="table" style="font-size: 14px; color: black; margin-left: auto; margin-right: auto;"&gt;
 &lt;caption style="font-size: initial !important;"&gt;Media y Desvio Estimados de la Edad al Primer Hijo por país&lt;/caption&gt;
  &lt;thead&gt;
   &lt;tr&gt;
@@ -415,7 +417,7 @@ La edad en que las mujeres comienzan a tener hijos está influenciada por una se
 # Edad al primer hijo
 
 &lt;div class="figure" style="text-align: center"&gt;
-&lt;img src="Presentacion_files/figure-html/fig-edu_att-1.png" alt="Gráfico Densidad, edad al primer hijo por Años de Educación de la Madre."  /&gt;
+&lt;img src="Presentacion_files/figure-html/edu_att -1.png" alt="Gráfico Densidad, edad al primer hijo por Años de Educación de la Madre."  /&gt;
 &lt;p class="caption"&gt;Gráfico Densidad, edad al primer hijo por Años de Educación de la Madre.&lt;/p&gt;
 &lt;/div&gt;
 
@@ -424,7 +426,7 @@ La edad en que las mujeres comienzan a tener hijos está influenciada por una se
 # Edad al primer hijo
 
 &lt;div class="figure" style="text-align: center"&gt;
-&lt;img src="Presentacion_files/figure-html/fig-edu_att_xpais-1.png" alt="Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."  /&gt;
+&lt;img src="Presentacion_files/figure-html/edu_att_xpais -1.png" alt="Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación."  /&gt;
 &lt;p class="caption"&gt;Gráfico Caja, distribución de la edad al primer hijo por país y si la mujer tiene más de 15 años de educación.&lt;/p&gt;
 &lt;/div&gt;
 
@@ -433,33 +435,20 @@ La edad en que las mujeres comienzan a tener hijos está influenciada por una se
 # Edad al primer hijo
 
 &lt;div class="figure" style="text-align: center"&gt;
-&lt;img src="Presentacion_files/figure-html/fig-riqueza_xpais-1.png" alt="Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar."  /&gt;
+&lt;img src="Presentacion_files/figure-html/riqueza_xpais -1.png" alt="Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar."  /&gt;
 &lt;p class="caption"&gt;Gráfico Densidad, distribución de la edad al primer hijo por riqueza del hogar.&lt;/p&gt;
 &lt;/div&gt;
 
 ---
 
-# Edad al primer hijo
-
-&lt;div class="figure" style="text-align: center"&gt;
-&lt;img src="Presentacion_files/figure-html/fig-comp_parejas-1.png" alt="Gráfico Caja, distribución de la edad al primer hijo por cantidad de uniones y cantidad de parejas sexuales."  /&gt;
-&lt;p class="caption"&gt;Gráfico Caja, distribución de la edad al primer hijo por cantidad de uniones y cantidad de parejas sexuales.&lt;/p&gt;
-&lt;/div&gt;
-
----
-
 # Primera relación sexual
 
-La edad en que las mujeres comienzan a tener relaciones sexuales marca el inicio del riesgo a concebir y por tanto la misma está fuertemente relacionada con la edad al primer hijo. Gran parte de las variables comportamentales, económicas, educativas de la mujer que se observaron en la edad al primer hijo, también son relevantes para la edad al primer acto sexual. En este caso se trabajará con la variable si la mujer comienza su vida sexual antes o después de los 18 años.  
-
----
-
-# Primera relación sexual
+La edad de inicio de las relaciones sexuales marca el inicio del riesgo de concebir y está estrechamente relacionada con la edad al primer hijo. Factores comportamentales, económicos y educativos relevantes para la edad al primer hijo también influyen en esta variable. En este análisis, se considerará si la mujer inicia su vida sexual antes o después de los 18 años.
 
 
 
 &lt;div class="figure" style="text-align: center"&gt;
-&lt;img src="Presentacion_files/figure-html/fig-psexo_xpais-1.png" alt="Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país."  /&gt;
+&lt;img src="Presentacion_files/figure-html/psexo_xpais -1.png" alt="Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país."  /&gt;
 &lt;p class="caption"&gt;Gráfico barras, Estimación de la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años por país.&lt;/p&gt;
 &lt;/div&gt;
 
@@ -864,38 +853,38 @@ En la siguiente tabla se puede observar como el *RMSE* del modelo para cada paí
 &lt;tbody&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Albania &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 3.63 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 12.16 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.82 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 12.05 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Armenia &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 3.56 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 11.74 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.18 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 10.82 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Etiopia &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 3.59 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 15.03 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.46 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 14.04 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Guatemala &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 3.61 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 13.45 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.58 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 13.46 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Perú &lt;/td&gt;
    &lt;td style="text-align:right;"&gt; 3.67 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 13.57 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 13.39 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; República Dominicana &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 3.70 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 14.60 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.69 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 14.27 &lt;/td&gt;
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Sudáfrica &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 3.47 &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 12.18 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3.67 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 13.82 &lt;/td&gt;
   &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
@@ -1111,7 +1100,7 @@ A partir de la misma es posible calcular las métricas para evaluar el rendimien
   &lt;/tr&gt;
   &lt;tr&gt;
    &lt;td style="text-align:left;"&gt; Especificidad &lt;/td&gt;
-   &lt;td style="text-align:right;"&gt; 0.65 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 0.66 &lt;/td&gt;
   &lt;/tr&gt;
 &lt;/tbody&gt;
 &lt;/table&gt;
