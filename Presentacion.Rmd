@@ -101,6 +101,7 @@ Se eligieron los siguientes países:
 
 El análisis incluye aproximadamente 105.000 observaciones de mujeres entre 15 y 64 años y se centra en 30 variables comunes consideradas relevantes.
 
+
 ---
 
 # Descripción de los datos
@@ -454,25 +455,29 @@ prop_hogar_tv %>%
 ---
 
 # Modelado de la edad al primer hijo
+## Filtrado de variables
 
-Antes de comenzar con el modelado se procede a realizar un filtrado de los datos y a seleccionar las variables más relevantes para el modelo.  
+En esta primera aproximación al problema se opta por solamente tomar las observaciones que dispongan de todos los datos necesarios para el modelo, no realizándose imputaciones de datos faltantes o análisis de la no respuesta a la encuesta.
 
-En esta primera aproximación al problema se opta por solamente tomar las observaciones que dispongan de todos los datos necesarios para el modelo, no realizándose imputaciones de datos faltantes o análisis de la no respuesta a la encuesta.  
+En total se utilizan **46029 observaciones** de mujeres donde se utilizara un 85% de los datos para entrenar y el 15% restante para evaluar los modelos considerados.
 
-En total se utilizan 46029 observaciones de mujeres donde se utilizara un 85% de los datos para entrenar y el 15% restante para evaluar los modelos considerados. En esta división se tendrá en cuenta el país de origen de la mujer para que no haya un desbalance de muchas observaciones de algún país en particular.  
+En esta división se tendrá en cuenta el país de origen de la mujer para que no haya un desbalance de muchas observaciones de algún país en particular.  
 
-Uno de los problemas que se presentan en datos provenientes de encuestas es la presencia de valores extremos posiblemente vinculados a errores en el rellenado o por falta de conocimiento de la mujer encuestada. Para el caso de la edad al primer hijo, se filtran las observaciones con valores extremadamente atípicos o que no tienen sentido desde el punto de vista biológico. En este caso, se consideran únicamente las mujeres que tuvieron su primer hijo a partir de los 11 años, límite establecido con base en criterios biológicos.
+Casos extremos: Ejemplo: Se consideran únicamente las mujeres que tuvieron su primer hijo a partir de los 11 años, límite establecido con base en criterios biológicos.
 
 ---
 
 # Modelado de la edad al primer hijo
 ## Selección   de   covariables   relevantes
 
-Antes de seleccionar las variables para el modelo, se excluyen aquellas que carecen de sentido práctico. Por ejemplo, la variable edad de la mujer no se considera, ya que al trabajar únicamente con mujeres que ya han tenido hijos, incluirla implicaría utilizar una variable estrechamente relacionada con la variable de interés, lo que podría sesgar el modelo, especialmente en el caso de mujeres muy jóvenes. A su vez se excluye también la variable de edad a la primera relación sexual, ya que como se vio en el análisis exploratorio están muy fuertemente relacionadas e interesa más ver el efecto de otros factores desconociendo esta variable.  
+Antes de seleccionar las variables para el modelo, se excluyen aquellas que carecen de sentido práctico. Por ejemplo:
+- la edad de la mujer
+- la edad a la primera relación sexual 
 
-Debido a que se cuenta con un gran número de variables que posiblemente no sean todas relevantes, como paso previo a cada modelo se realiza un análisis de importancia de las variables. Para esto se utiliza un modelo de *Random Forest* donde se utiliza el método de permutación para calcular la importancia de las variables.  
-
-Para el ajuste de este modelo no se procura analizar ni afinar en detalle la grilla de hiperparámetros, sino que se busca obtener un modelo relativamente bueno del que se pueda extraer las variables más importantes. En base a esto se utiliza una grilla de 30 combinaciones posibles de la cantidad de variables a considerar en cada nodo (*mtry*) y la cantidad mínima de observaciones en cada nodo terminal (*min_n*). Se utilizó un *10-fold cross-validation* para evaluar los modelos y se seleccionó el mejor modelo en base a la métrica de raíz del error cuadrático medio.
+Paso previo: análisis de importancia de las variables. Para esto se utiliza un modelo de *Random Forest* donde se utiliza el método de permutación para calcular la importancia de las variables:
+- grilla de 30 combinaciones posibles de la cantidad de variables a considerar en cada nodo (*mtry*)
+- cantidad mínima de observaciones en cada nodo terminal (*min_n*)
+- *10-fold cross-validation* para evaluar los modelos. Se seleccionó el mejor modelo en base a la métrica de raíz del error cuadrático medio.
 
 ---
 
@@ -523,16 +528,19 @@ En este caso las variables que quedaron seleccionadas son:
 9.  Numero ideal de hijos.
 10. Numero de personas que viven en el hogar.
 
-En este caso se trabaja íntegramente con '*tidymodels*' framework que permite realizar la evaluación de los modelos de manera sencilla. Se opta por evaluar la eficiencia de modelos basados en árboles: *Bagging*, *Random Forest* y *XGBoost*, donde para cada uno se realiza su correspondiente tuneo de hiperparámetros.
+
 
 ---
 
 # Modelado de la edad al primer hijo
 ## Búsqueda de Hiperparámetros
+### Bagging
 
 Se procede a la búsqueda de hiperparámetros para los modelos en busca del modelo que presente la mejor *performance*. Para esto se crea una grilla específica para cada uno, evaluando todos los modelos en conjunto mediante *workflow_map*.
 
-Para los modelos de *Bagging* se entrenaron los parámetros de cantidad mínima de observaciones en cada nodo terminal (*min_n*) y la cantidad de árboles (*trees*). En la siguiente tabla se puede observar la grilla utilizada, que luego se visualizará si la misma es la adecuada para este problema.
+Se entrenaron:
+- cantidad mínima de observaciones en cada nodo terminal (*min_n*)
+- cantidad de árboles (*trees*)
 
 ```{r, bagging_grid}
 tibble(min_n = c(50,100,150,200,250,300,350,400,450,500,
@@ -541,55 +549,16 @@ tibble(min_n = c(50,100,150,200,250,300,350,400,450,500,
   kable_styling(latex_options = "striped", font_size = 8, position = "center")
 ```
 
----
-
-# Modelado de la edad al primer hijo
-## Búsqueda de Hiperparámetros
-
-En cuanto a los modelos de *Random Forest* se ajustan los hiperparámetros de cantidad mínima de observaciones en cada nodo terminal (*min_n*), la cantidad de variables a considerar en cada nodo (*mtry*) y la cantidad de árboles (*trees*). En la siguiente tabla se puede observar la grilla utilizada:
-
-```{r, rf_grid}
-tibble(min_n = c(50,100,150,200,250,300,350,400,450,500,
-                                 1000,1500,2000,2500),
-       trees = c(50,100,500,1000,"","","","","","","","","",""),
-       mtry = c(2,4,6,8,10,"","","","","","","","","")) %>% t() %>% kable(caption = 'Grilla de hiperparámetros para modelos de Random Forest',  booktabs = TRUE) %>% 
-  kable_styling(latex_options = "striped", font_size = 8, position = "center")
-```
 
 ---
 
 # Modelado de la edad al primer hijo
 ## Búsqueda de Hiperparámetros
-
-Para los modelos de *XGBoost* debido a la gran cantidad de hiperparámetros a ajustar se procedió de forma distinta no definiendo una grilla fija. En este caso se utilizará un método de búsqueda que permite evaluar un espacio de hiperparámetros de forma más eficiente, en particular se opto por utilizar *Latin hypercube sampling*, evaluando un total de 60 combinaciones posibles de hiperparámetros.
-
-En primer lugar se evaluó posibles rangos válidos para algunos de estos hiperparámetros. De esto se opto por limitar el rango de algunos de ellos como el *learn_rate* a un rango más acotado, mientras que a otros simplemente se utilizó los rangos por defecto que vienen en *tidymodels*.
-
----
-
-# Modelado de la edad al primer hijo
-## Búsqueda de Hiperparámetros
-
-```{r xgb_grid}
-tibble(tree_depth=c(1,15),
-       min_n=c("50","500"),
-       loss_reduction=c("1e-10",31),
-       sample_size=c(0.1,1),
-       mtry=c(1,10),
-       learn_rate=c(0.0016, 0.16)) %>% t() %>% kable(caption = 'Grilla rango hiperparámetros para modelos de XGBoost',  booktabs = TRUE,col.names = c("","Valor min.","Valor max.")) %>% 
-  kable_styling(latex_options = "striped", font_size = 8, position = "center")
-```
+### Bagging
 
 ```{r tune_phijo}
 load('datos/tune_phijo.RData')
 ```
-
-La búsqueda se realiza al igual que para el modelo de visualización de importancias mediante *10-fold cross-validation*. En las siguientes figuras se puede visualizar los valores de *RMSE* y *RSQ* para los modelos de *Bagging* y *Random Forest* respectivamente. En ambos gráficos parece bastante marcado una mejor *performance* para valores de *min_n* cercano a los $400$, pareciendo la grilla propuesta adecuada para este problema.
-
----
-
-# Modelado de la edad al primer hijo
-## Búsqueda de Hiperparámetros
 
 ```{r tune_bagging_phijo , fig.pos='H'}
 #| label: fig-tune_bagging_phijo
@@ -605,6 +574,27 @@ autoplot(tune_phijo$result[[1]]) + labs(x="Tamaño mínimo de nodo (min_n)") + t
 
 # Modelado de la edad al primer hijo
 ## Búsqueda de Hiperparámetros
+### Random Forest
+
+Se entrenaron:
+- cantidad mínima de observaciones en cada nodo terminal (*min_n*)
+- cantidad de variables a considerar en cada nodo (*mtry*)
+- cantidad de árboles (*trees*)
+
+
+```{r, rf_grid}
+tibble(min_n = c(50,100,150,200,250,300,350,400,450,500,
+                                 1000,1500,2000,2500),
+       trees = c(50,100,500,1000,"","","","","","","","","",""),
+       mtry = c(2,4,6,8,10,"","","","","","","","","")) %>% t() %>% kable(caption = 'Grilla de hiperparámetros para modelos de Random Forest',  booktabs = TRUE) %>% 
+  kable_styling(latex_options = "striped", font_size = 8, position = "center")
+```
+
+---
+
+# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros
+### Random Forest
 
 ```{r tune_rf_phijo , fig.pos='H'}
 #| label: fig-tune_rf_phijo
@@ -619,11 +609,30 @@ autoplot(tune_phijo$result[[2]]) + labs(x="Tamaño mínimo de nodo (min_n)")  + 
 ---
 
 # Modelado de la edad al primer hijo
-## Comparación de modelos
+## Búsqueda de Hiperparámetros
+### XGBoost
 
-Para comparar los modelos obtenidos, se realizó una comparación entre la métrica RMSE (Raíz del Error Cuadrático Medio) de cada uno. Esta medida representa la raíz cuadrada de la media de la diferencia entre los valores predichos y los observados al cuadrado. Mientras más bajo sea este valor, significa que menor es el error de estimación del modelo; entonces, al comparar los tres modelos realizados, se puede elegir cuál es el mejor para estimar, teniendo en cuenta esta métrica.  
+No se definió una grilla fija, se utilizó el método de búsqueda *Latin hypercube sampling*:
+- evalúa un espacio de hiperparámetros de forma más eficiente
+- se evaluaron un total de 60 combinaciones posibles de hiperparámetros
 
-En este caso, el modelo ajustado por el método de Random Forest es el que tiene un valor más bajo del RMSE, aunque los tres valores son muy cercanos entre sí, por lo cual sugiere que el rendimiento de los modelos es muy similar. Esto se puede deber a que los tres son basados en árboles, entonces, por más que haya diferencias en la metodología, a grandes rasgos deberían predecir de forma similar.
+```{r xgb_grid}
+tibble(tree_depth=c(1,15),
+       min_n=c("50","500"),
+       loss_reduction=c("1e-10",31),
+       sample_size=c(0.1,1),
+       mtry=c(1,10),
+       learn_rate=c(0.0016, 0.16)) %>% t() %>% kable(caption = 'Grilla rango hiperparámetros para modelos de XGBoost',  booktabs = TRUE,col.names = c("","Valor min.","Valor max.")) %>% 
+  kable_styling(latex_options = "striped", font_size = 8, position = "center")
+```
+
+
+---
+
+# Modelado de la edad al primer hijo
+## Búsqueda de Hiperparámetros
+### Resultados
+La búsqueda se realiza al igual que para el modelo de visualización de importancias mediante *10-fold cross-validation*. En las figuras se puede visualizar los valores de *RMSE* y *RSQ* para los modelos de *Bagging* y *Random Forest* respectivamente. En ambos gráficos parece bastante marcado una mejor *performance* para valores de *min_n* cercano a los $400$, pareciendo la grilla propuesta adecuada para este problema.
 
 ---
 
@@ -651,9 +660,21 @@ autoplot(
 ---
 
 # Modelado de la edad al primer hijo
-## Evaluación modelo final
+## Comparación de modelos
 
-Una vez realizada la comparación de los modelos, y decidiéndose por el modelo realizado mediante el método de *Random Forest*, se procede a evaluar este modelo como modelo final.
+Metrica comparación:
+$RMSE = \sqrt{\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2}$
+
+- El modelo ajustado por el método de **Random Forest** es el que tiene un valor más bajo del RMSE
+- Los tres valores son muy cercanos entre sí, por lo cual sugiere que el rendimiento de los modelos es muy similar. - Esto se puede deber a que los tres son basados en árboles, entonces, por más que haya diferencias en la metodología, a grandes rasgos deberían predecir de forma similar.
+
+---
+
+# Modelado de la edad al primer hijo
+## Evaluación modelo final
+### Análisis de los Residuos - Conjunto de Entrenamiento
+
+Modelo Final: **Random Forest**
 
 ```{r eval_rf_ephijo}
 best_phijo <- tune_phijo  %>% 
@@ -674,22 +695,6 @@ fit_train_phijo <- augment(fit_phijo,new_data=train_phijo) %>% mutate(residuos =
 fit_test_phijo <- augment(fit_phijo,new_data=test_phijo)
 ```
 
-El primer paso a realizar es el análisis de los residuos. Se obtuvo la siguiente figura que compara el valor predicho por el modelo para cada individuo en el eje horizontal y el residuo, que es el valor verdaderamente observado menos el predicho, en el eje vertical. En el gráfico se puede observar cómo los puntos son bastante simétricos alrededor del cero, lo cual nos da un indicio de que el modelo no estaría sesgado. Tampoco se observa un patrón en la nube de puntos que indique que el modelo no haya ajustado correctamente. 
-
----
-
-# Modelado de la edad al primer hijo
-## Evaluación modelo final
-
-Lo que sí se puede observar es la aparición de algunos valores atípicos de los residuos en la parte negativa del gráfico. Esto indica que, para los valores observados más altos, en los que una mujer tuvo un hijo, el modelo no logra estimar bien la edad a la que esa mujer realmente tuvo su primer hijo. Esto se puede corroborar observando que en el eje horizontal solo tenemos valores predichos menores a 30 años, mientras que en la base de datos sí existen mujeres que hayan tenido hijos luego de esa edad. Se intentó ajustar el modelo realizando transformaciones y teniendo en cuenta el muestreo en la edad, pero no tuvimos éxito en lograr que el modelo capte mejor a esas mujeres. Tal vez las covariables que están en el modelo no sean suficientemente relevantes para explicar este fenómeno.  
-
-Otro punto a considerar es que, observando los puntos segmentados por país, todos presentan aproximadamente el mismo comportamiento, lo cual lleva a considerar que el modelo predice de buena manera en todos ellos.
-
----
-
-# Modelado de la edad al primer hijo
-## Evaluación modelo final
-
 ```{r res_modelo_phijo , fig.pos='H'}
 #| label: fig-res_modelo_phijo
 #| fig-cap: "Gráfico residuos vs predichos, conjunto de entrenamiento."
@@ -707,13 +712,17 @@ fit_train_phijo %>% ggplot(aes(x = .pred, y = residuos,color=pais)) +
 
 # Modelado de la edad al primer hijo
 ## Evaluación modelo final
+### Análisis de los Residuos - Conjunto de Entrenamiento
 
-Luego se realizó la siguiente figura para el conjunto de datos de testeo, en donde se observa en el eje horizontal el valor predicho de la edad de la mujer a la hora de tener su primer hijo, y en el eje vertical el valor real. Se pueden considerar los mismos puntos que el gráfico anterior, lo que indica que no existe un sobreajuste hacia el subconjunto de datos de entrenamiento. También, de igual manera que en el anterior gráfico, el modelo no logra predecir bien la edad de las mujeres que tuvieron su primer hijo después de los 30 años.
+- Puntos simétricos alrededor del cero (No habría sesgo)
+- No se observa un patrón en la nube de puntos (El modelo habría ajustado correctamente)
+- Aparición de algunos valores atípicos de los residuos en la parte negativa del gráfico (el modelo no logra estimar bien la edad a la que las mujeres realmente tuvieron su primer hijo para valores más altos)
+- Los puntos segmentados por país presentan aproximadamente el mismo comportamiento 
 
 ---
 
 # Modelado de la edad al primer hijo
-## Evaluación modelo final
+## Evaluación modelo final - Conjunto de Testeo
 
 ```{r eval_modelo_phijo , fig.pos='H'}
 #| label: fig-eval_modelo_phijo
@@ -729,12 +738,17 @@ fit_test_phijo %>% ggplot(aes(x = .pred, y = edad_phijo)) +
   theme_minimal()
 ```
 
+Se observa el mismo comportamiento que en el conjunto de entrenamiento (No habría sobreajuste)
+
 ---
 
 # Modelado de la edad al primer hijo
 ## Evaluación modelo final
 
-En la siguiente tabla se puede observar como el *RMSE* del modelo para cada país es muy similar al resto, lo cual confirma el punto observado en el gráfico anterior. La variable MAPE (Mean Absolute Percentage Error) indica la media del error porcentual de todas las observaciones de cada país. Los valores de esta métrica son muy parecidos para todos los países, y no indican que ningún país prediga muy mal la edad que tiene una mujer cuando tiene su primer hijo.
+- El *RMSE* del modelo para cada país es muy similar al resto
+- $MAPE = \frac{1}{n} \sum_{i=1}^{n} \left| \frac{y_i - \hat{y}_i}{y_i} \right| \times 100$
+- Indica la media del error porcentual de todas las observaciones de cada país
+- Muy parecida para todos los países, y no indican que ningún país prediga muy mal la variable a explicar
 
 ```{r}
 metricas_reg <- metric_set(rmse,mape)
@@ -750,7 +764,7 @@ fit_test_phijo %>% group_by(pais) %>% metricas_reg(truth = edad_phijo, estimate 
 # Modelado de la edad al primer hijo
 ## Interpretación e importancia de las variables
 
-Lo primero a destacar es que en la siguiente figura, se obtuvieron resultados muy similares a los obtenidos en el anterior ejemplo y el análisis exploratorio, siendo las variables años de educación y país de la mujer las variables con más importancia.
+Resultados muy similares a los obtenidos en el anterior ejemplo y el análisis exploratorio, siendo las variables años de educación y país de la mujer las variables con más importancia.
 
 ```{r vip_fit_phijo , fig.pos='H'}
 #| label: fig-vip_fit_phijo
@@ -782,15 +796,7 @@ pdp_pais <- model_profile(explainer_fit_phijo, N = 1000, variables = "pais")
 
 # Modelado de la edad al primer hijo
 ## Interpretación e importancia de las variables
-
-La siguiente figura muestra un gráfico de Dependencia Parcial del efecto marginal que tiene la variable de años de educación de la madre con respecto a la variable de interés del problema planteado.
-
-En el gráfico se puede observar que la edad media de la mujer a la hora de tener su primer hijo en mujeres que tienen 10 o menos años de educación permanece constante entre los 19 y 20 años. Luego de los 10 años de educación, la edad media de la mujer al tener su primer hijo crece de forma abrupta por cada año extra de educación que tiene la mujer.
-
----
-
-# Modelado de la edad al primer hijo
-## Interpretación e importancia de las variables
+### Gráfico de Dependencia Parcial - Años de educación
 
 ```{r pdp_educ , fig.pos='H'}
 #| label: fig-pdp_educ
@@ -806,8 +812,17 @@ plot(pdp_educ) + geom_rug() + theme_minimal() + labs(title='',subtitle='',x='Añ
 
 # Modelado de la edad al primer hijo
 ## Interpretación e importancia de las variables
+### Gráfico de Dependencia Parcial - Años de educación
 
-La siguiente fugura también muestra un gráfico PDP para analizar el efecto marginal de la variable de país sobre la variable de interés. En este caso, se observa algo similar a lo observado en el análisis exploratorio, en donde los países europeos tienen la edad media de la mujer al tener su primer hijo un poco más alta que el resto.
+- Efecto marginal que tiene la variable de años de educación de la madre con respecto a la variable de interés del problema planteado.
+- La edad media de la mujer a la hora de tener su primer hijo en mujeres que tienen 10 o menos años de educación permanece constante entre los 19 y 20 años
+- Luego de los 10 años de educación, la edad media de la mujer al tener su primer hijo crece de forma abrupta por cada año extra de educación que tiene la mujer.
+
+---
+
+# Modelado de la edad al primer hijo
+## Interpretación e importancia de las variables
+### Gráfico de Dependencia Parcial - País
 
 ```{r pdp_pais , fig.pos='H'}
 #| label: fig-pdp_pais
@@ -818,21 +833,25 @@ La siguiente fugura también muestra un gráfico PDP para analizar el efecto mar
 
 plot(pdp_pais)  + theme_minimal() + labs(title='',subtitle='',x='País', y='Edad Media al Primer Hijo') + theme(axis.text.x = element_text(angle = 45, hjust = 1)) + lims(y=c(0,25))
 ```
+---
+
+# Modelado de la edad al primer hijo
+## Interpretación e importancia de las variables
+### Gráfico de Dependencia Parcial - País
+
+- Efecto marginal de la variable de país sobre la variable de interés.
+- Similar al análisis exploratorio: países europeos tienen la edad media de la mujer al tener su primer hijo un poco más alta que el resto.
 
 ---
 
 # Modelado de la edad a la primera relación sexual
 
-Se procede a realizar el modelado de la edad a la primera relación sexual donde el procedimiento a realizar es muy similar al anterior. En primer lugar se realiza un filtrado de los datos, donde nuevamente se trabajará con observaciones que dispongan de todos los datos necesarios para el modelo. En este caso la variable de interés no esta presente con lo cual se debe construir a partir de la variable *edad_psexo*.
-
-Como se visualizó en el análisis exploratorio la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años en algunos países es bastante más baja. Con lo cual se decide crear otra variable que combine el país y la variable de interés, para que en el proceso de división de los datos o el remuestreo no haya un desbalance.
-
----
-
-# Modelado de la edad a la primera relación sexual
-## Selección de covariables relevantes
-
-Previo a la división de los datos se procede por filtrar observaciones con valores extremadamente atípicos o que podrían carecer de sentido, en este caso se toma como límite inferior de la edad a la primera relación sexual los 9 años. Con lo que se cuentan con 49349 observaciones donde nuevamente se utilizará un 85% de los datos para entrenar y el 15% restante para evaluar los modelos considerados.
+- Modelado de la edad a la primera relación sexual. Interesa predecir la proporción de mujeres que comienzan a tener relaciones sexuales antes de los 18 años en algunos países.
+- Se creó otra variable que combine el país y la variable de interés, para que en el proceso de división de los datos o el remuestreo no haya un desbalance.
+- Se trabajó con observaciones que disponen de todos los datos necesarios para el modelo
+- Se construyó la variable de interés a partir de la variable *edad_psexo*
+- Se filtraron observaciones con valores extremadamente atípicos o que podrían carecer de sentido, en este caso se toma como límite inferior de la edad a la primera relación sexual los 9 años
+- **49349 observaciones** donde nuevamente se utilizará un 85% de los datos para entrenar y el 15% restante para evaluar los modelos considerados.
 
 ---
 
