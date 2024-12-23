@@ -1105,3 +1105,20 @@ plot(pdp_pais_psexo) + theme_minimal() + labs(title='',subtitle='',x='País', y=
 # Comentarios Finales
 
 Como se observo el resultado general de los modelos fue aceptable en ambos casos, teniendo en cuenta que las variables de interés son de naturaleza compleja y el error irreducible en este tipo de caso es elevado. En cuanto las mejoras posibles se debería considerar formas de mejorar la predicción en el caso de edad del primer hijo para mujeres de mayores edades algo que no se ha conseguido captar en este caso, algo que posiblemente se deba a que no se tengan covariables óptimas para captar este fenómeno.
+
+
+
+**Comentarios:**
+
+El trabajo está  bien estructurado, ordenado y claro así como el código,  la presentación también estuvo bien.
+Muy bien que usaron ggsurvey para el EDA, estaría bueno para trabajos futuros incluir referencias de los paquetes utilizados, como este.  Les fató incluir referencias bibliográficas en general.
+Algunos comentarios:
+Debieron mencionar si hay alguna justificación en la seleccionan de 10 variables o no.
+Podrían agregar  para las grillas  porque esta bueno una resolucion más fina en los valores más chicos de min_n.
+"Con lo cual se decide crear otra variable que combine el país y la variable de interés, para que en el proceso de división de los datos o el remuestreo no haya un desbalance"  se decide crear una variable, eso no queda claro 
+Gráfico 21, los números en el eje x quedaron solapados,
+Los comentarios finales quedaron un poco escuetos dado todo el trajo que hicieron
+Ya que usaron xgboost, puede haber trabajo hecho para colas pesadas (predecir la edad) y para pesos. XGBoost te permite implementar tu propia funcion de pérdida.
+
+Hicieron un muy bien trabajo!!
+95/100
